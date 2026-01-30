@@ -239,6 +239,25 @@ input:focus {
     box-shadow: 0 0 0 3px rgba(59, 149, 217, 0.2);
 }
 
+select {
+    width: 100%;
+    padding: 16px;
+    border: var(--stroke);
+    border-radius: 12px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    outline: none;
+    background: var(--color-white);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+select:focus {
+    border-color: var(--color-info);
+    box-shadow: 0 0 0 3px rgba(59, 149, 217, 0.2);
+}
+
 /* ============================================
    ACTIONS AREA
 ============================================ */
@@ -261,6 +280,100 @@ input:focus {
     align-items: center;
     gap: 12px;
     color: var(--color-text);
+}
+
+.daily-status {
+    background: var(--color-white);
+    border: var(--stroke);
+    box-shadow: var(--shadow);
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    display: grid;
+    gap: 16px;
+}
+
+.daily-date {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 800;
+}
+
+.daily-date-label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #666;
+    letter-spacing: 0.6px;
+}
+
+.daily-date-value {
+    font-size: 1.1rem;
+}
+
+.daily-quests {
+    display: grid;
+    gap: 10px;
+}
+
+.quest-item {
+    background: var(--color-background);
+    border: var(--stroke-thin);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+}
+
+.quest-item.complete {
+    background: rgba(149, 201, 93, 0.3);
+    border-color: #6fa84a;
+}
+
+.quest-player {
+    font-size: 1rem;
+}
+
+.quest-progress {
+    font-size: 0.95rem;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--color-white);
+    border: var(--stroke-thin);
+}
+
+.time-selector {
+    background: var(--color-white);
+    border: var(--stroke);
+    box-shadow: var(--shadow);
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    display: grid;
+    gap: 12px;
+}
+
+.time-selector label {
+    font-weight: 800;
+    font-size: 1rem;
+}
+
+.time-selector-controls {
+    display: grid;
+    gap: 10px;
+}
+
+.time-indicator {
+    font-weight: 700;
+    color: #555;
+}
+
+.task-feedback {
+    font-weight: 700;
+    color: var(--color-danger);
+    min-height: 22px;
 }
 
 /* ============================================
@@ -467,6 +580,27 @@ input:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.modal-time {
+    text-align: center;
+    font-weight: 800;
+    margin-bottom: 20px;
+    color: #444;
+}
+
+.time-badge {
+    background: var(--color-info);
+    border: var(--stroke-thin);
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 0.95rem;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 0 #1a1a1a;
 }
 
 /* ============================================
