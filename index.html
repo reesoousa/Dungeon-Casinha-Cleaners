@@ -66,7 +66,7 @@
                 <label for="time-available">Tempo disponível</label>
                 <div class="time-selector-controls">
                     <select id="time-available" onchange="updateTimeAvailable()">
-                        <option value="">Selecione</option>
+                        <option value="infinite">Infinito</option>
                         <option value="5">5 minutos</option>
                         <option value="10">10 minutos</option>
                         <option value="15">15 minutos</option>
@@ -156,27 +156,26 @@
                     <span class="legend-dot"></span>
                     Atrasada
                 </div>
+                <div class="legend-item locked">
+                    <span class="legend-dot"></span>
+                    Bloqueada
+                </div>
             </div>
 
             <div id="dungeon-map" class="dungeon-map"></div>
 
-            <div class="section-title">
-                <i data-lucide="sparkles" style="width: 30px; height: 30px;"></i>
-                <span>Recomendações</span>
-            </div>
-
-            <div class="recommendations-grid">
-                <div class="recommendation-column">
-                    <h3>Hoje</h3>
-                    <div id="recommendations-today" class="recommendation-list"></div>
+            <div class="map-detail-card" id="map-detail-card">
+                <div class="map-detail-header">
+                    <span class="map-detail-title">Selecione um nó do mapa</span>
+                    <span class="map-detail-state">Explore a dungeon</span>
                 </div>
-                <div class="recommendation-column">
-                    <h3>Esta semana</h3>
-                    <div id="recommendations-week" class="recommendation-list"></div>
-                </div>
-                <div class="recommendation-column">
-                    <h3>Próxima semana</h3>
-                    <div id="recommendations-next-week" class="recommendation-list"></div>
+                <p class="map-detail-description">
+                    Toque em uma missão para ver detalhes rápidos, prioridade e sugestões.
+                </p>
+                <div class="map-detail-meta">
+                    <span><i data-lucide="clock" style="width: 14px; height: 14px;"></i> Tempo: --</span>
+                    <span><i data-lucide="repeat" style="width: 14px; height: 14px;"></i> Frequência: --</span>
+                    <span><i data-lucide="calendar-check" style="width: 14px; height: 14px;"></i> Última vez: --</span>
                 </div>
             </div>
         </div>
