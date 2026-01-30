@@ -42,6 +42,42 @@
 
         <!-- DUNGEON SCREEN -->
         <div id="screen-dungeon" class="screen">
+            <div class="daily-status">
+                <div class="daily-date">
+                    <i data-lucide="calendar-days" style="width: 24px; height: 24px;"></i>
+                    <div>
+                        <div class="daily-date-label">Dia de hoje</div>
+                        <div id="current-day" class="daily-date-value"></div>
+                    </div>
+                </div>
+                <div class="daily-quests">
+                    <div class="quest-item" id="quest-item-0">
+                        <div class="quest-player" id="quest-player-0"></div>
+                        <div class="quest-progress" id="quest-progress-0">0/2</div>
+                    </div>
+                    <div class="quest-item" id="quest-item-1">
+                        <div class="quest-player" id="quest-player-1"></div>
+                        <div class="quest-progress" id="quest-progress-1">0/2</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="time-selector">
+                <label for="time-available">Tempo disponível</label>
+                <div class="time-selector-controls">
+                    <select id="time-available" onchange="updateTimeAvailable()">
+                        <option value="">Selecione</option>
+                        <option value="5">5 minutos</option>
+                        <option value="10">10 minutos</option>
+                        <option value="15">15 minutos</option>
+                        <option value="30">30 minutos</option>
+                        <option value="60">60 minutos</option>
+                    </select>
+                    <div class="time-indicator" id="time-indicator">Nenhum tempo definido</div>
+                </div>
+                <div class="task-feedback" id="task-feedback"></div>
+            </div>
+
             <div class="actions-area">
                 <button class="btn btn-info" onclick="openTaskModal()">
                     <i data-lucide="sword" style="width: 24px; height: 24px;"></i>
@@ -122,6 +158,7 @@
                 Escolha uma Tarefa
             </h2>
             <p class="modal-subtitle">Toque em uma das cartas para invocar o monstro</p>
+            <div class="modal-time" id="modal-time"></div>
             <div id="task-selection-cards" class="task-selection-grid"></div>
             <button class="btn btn-block" onclick="closeTaskModal()">
                 <i data-lucide="x" style="width: 20px; height: 20px;"></i>
