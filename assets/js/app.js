@@ -88,7 +88,7 @@ let gameState = {
     initialized: false,
     activityLog: [],
     purchaseHistory: [],
-    timeAvailable: null
+    timeAvailable: 'infinite'
 };
 
 let currentDayKey = null;
@@ -229,7 +229,9 @@ function getRecommendations() {
 function getAvailableTasksByTime(timeAvailable) {
     const activeNames = new Set(gameState.activeMonsters.map(monster => monster.name));
     const allTasks = Object.values(TASK_DATABASE).flat();
-    const timeFiltered = allTasks.filter(task => typeof task.time === 'number' && task.time <= timeAvailable);
+    const timeFiltered = timeAvailable === 'infinite'
+        ? allTasks
+        : allTasks.filter(task => typeof task.time === 'number' && task.time <= timeAvailable);
     const available = timeFiltered.filter(task => !activeNames.has(task.name));
     return {
         timeFiltered,
@@ -280,7 +282,7 @@ function init() {
             
             if (!gameState.activityLog) gameState.activityLog = [];
             if (!gameState.purchaseHistory) gameState.purchaseHistory = [];
-            if (!gameState.timeAvailable) gameState.timeAvailable = null;
+            if (!gameState.timeAvailable) gameState.timeAvailable = 'infinite';
             
             if (gameState.initialized) {
                 ensureTaskMetadata();
@@ -342,12 +344,13 @@ function showGameInterface() {
 
 function updateTimeAvailable() {
     const select = document.getElementById('time-available');
-    const selectedValue = parseInt(select.value, 10);
+    if (!select) return;
     
-    if (Number.isNaN(selectedValue)) {
-        gameState.timeAvailable = null;
+    if (select.value === 'infinite') {
+        gameState.timeAvailable = 'infinite';
     } else {
-        gameState.timeAvailable = selectedValue;
+        const selectedValue = parseInt(select.value, 10);
+        gameState.timeAvailable = Number.isNaN(selectedValue) ? null : selectedValue;
     }
     
     setTaskFeedback('');
@@ -360,12 +363,16 @@ function renderTimeSelector() {
     const indicator = document.getElementById('time-indicator');
     if (!select || !indicator) return;
     
-    if (gameState.timeAvailable) {
+    if (gameState.timeAvailable === 'infinite') {
+        select.value = 'infinite';
+        indicator.textContent = 'Selecionado: Infinito (todas as tarefas)';
+    } else if (gameState.timeAvailable) {
         select.value = String(gameState.timeAvailable);
         indicator.textContent = `Selecionado: ${formatTimeLabel(gameState.timeAvailable)}`;
     } else {
-        select.value = '';
-        indicator.textContent = 'Nenhum tempo definido';
+        select.value = 'infinite';
+        indicator.textContent = 'Selecionado: Infinito (todas as tarefas)';
+        gameState.timeAvailable = 'infinite';
     }
 }
 
@@ -468,7 +475,9 @@ function openTaskModal() {
     };
     
     if (modalTime) {
-        modalTime.textContent = `Tempo disponível: ${formatTimeLabel(gameState.timeAvailable)}`;
+        modalTime.textContent = gameState.timeAvailable === 'infinite'
+            ? 'Tempo disponível: Infinito'
+            : `Tempo disponível: ${formatTimeLabel(gameState.timeAvailable)}`;
     }
     
     tasks.forEach(task => {
@@ -808,49 +817,132 @@ function renderMap() {
     
     mapContainer.innerHTML = '';
     const stateLabels = {
-        recent: 'Concluída recentemente',
+        recent: 'Concluída',
         available: 'Disponível',
-        overdue: 'Atrasada'
+        overdue: 'Atrasada',
+        locked: 'Bloqueada'
+    };
+    const zoneDefinitions = [
+        {
+            id: 'today',
+            title: 'Hoje',
+            subtitle: 'O que importa agora na masmorra.',
+            filter: status => status.state === 'overdue' ||
+                status.state === 'available' ||
+                (status.state === 'recent' && status.daysSince === 0)
+        },
+        {
+            id: 'week',
+            title: 'Esta semana',
+            subtitle: 'Prepare-se para os próximos desafios.',
+            filter: status => status.daysUntilDue > 0 && status.daysUntilDue <= 7
+        },
+        {
+            id: 'next-week',
+            title: 'Próxima semana',
+            subtitle: 'Vislumbre das missões futuras.',
+            filter: status => status.daysUntilDue > 7 && status.daysUntilDue <= 14
+        }
+    ];
+    const mapDetailCard = document.getElementById('map-detail-card');
+    const updateMapDetail = (payload) => {
+        if (!mapDetailCard || !payload) return;
+        mapDetailCard.querySelector('.map-detail-title').textContent = payload.title;
+        mapDetailCard.querySelector('.map-detail-state').textContent = payload.stateLabel;
+        mapDetailCard.querySelector('.map-detail-description').textContent = payload.description;
+        const metaItems = mapDetailCard.querySelectorAll('.map-detail-meta span');
+        if (metaItems.length >= 3) {
+            metaItems[0].innerHTML = `<i data-lucide="clock" style="width: 14px; height: 14px;"></i> Tempo: ${payload.timeLabel}`;
+            metaItems[1].innerHTML = `<i data-lucide="repeat" style="width: 14px; height: 14px;"></i> Frequência: ${payload.frequencyLabel}`;
+            metaItems[2].innerHTML = `<i data-lucide="calendar-check" style="width: 14px; height: 14px;"></i> Última vez: ${payload.lastDoneLabel}`;
+        }
+    };
+    const sortByUrgency = (a, b) => {
+        if (a.daysUntilDue !== b.daysUntilDue) return a.daysUntilDue - b.daysUntilDue;
+        return a.task.time - b.task.time;
     };
     
-    statuses.forEach(({ task, state, lastDate, daysUntilDue }) => {
-        const node = document.createElement('div');
-        node.className = `map-node ${state}`;
-        const lastDone = lastDate
-            ? lastDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-            : 'Nunca';
-        const dueLabel = daysUntilDue < 0
-            ? `Atrasada há ${Math.abs(daysUntilDue)}d`
-            : daysUntilDue === 0
-                ? 'Vence hoje'
-                : `Vence em ${daysUntilDue}d`;
+    zoneDefinitions.forEach(zone => {
+        const zoneWrap = document.createElement('div');
+        zoneWrap.className = 'map-zone';
         
-        node.innerHTML = `
-            <div class="map-node-header">
-                <span class="map-node-state ${state}">${stateLabels[state]}</span>
-                <span class="map-node-frequency">${formatFrequency(task.frequency)}</span>
+        const zoneHeader = document.createElement('div');
+        zoneHeader.className = 'map-zone-header';
+        zoneHeader.innerHTML = `
+            <div>
+                <div class="map-zone-title">${zone.title}</div>
+                <div class="map-zone-subtitle">${zone.subtitle}</div>
             </div>
-            <div class="map-node-title">${task.name}</div>
-            <div class="map-node-meta">
-                <span>
-                    <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
-                    ${formatTimeLabel(task.time)}
-                </span>
-                <span>
-                    <i data-lucide="calendar-check" style="width: 14px; height: 14px;"></i>
-                    ${lastDone}
-                </span>
-            </div>
-            <div class="map-node-due">${dueLabel}</div>
+            <div class="map-zone-badge">Zona</div>
         `;
         
-        mapContainer.appendChild(node);
+        const zoneNodes = document.createElement('div');
+        zoneNodes.className = 'map-zone-nodes';
+        
+        const zoneTasks = statuses.filter(zone.filter).sort(sortByUrgency).slice(0, 4);
+        zoneHeader.querySelector('.map-zone-badge').textContent = `${zoneTasks.length} nós`;
+        
+        if (!zoneTasks.length) {
+            const empty = document.createElement('div');
+            empty.className = 'map-zone-empty';
+            empty.textContent = 'Nenhuma missão destacada aqui.';
+            zoneNodes.appendChild(empty);
+        }
+        
+        zoneTasks.forEach(({ task, state, lastDate, daysUntilDue, daysSince }) => {
+            const lastDone = lastDate
+                ? lastDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+                : 'Nunca';
+            const dueLabel = daysUntilDue < 0
+                ? `Atrasada há ${Math.abs(daysUntilDue)}d`
+                : daysUntilDue === 0
+                    ? 'Vence hoje'
+                    : `Vence em ${daysUntilDue}d`;
+            const displayState = zone.id === 'today' ? state : 'locked';
+            const description = displayState === 'locked'
+                ? `Fica disponível em breve. ${dueLabel}`
+                : dueLabel;
+            
+            const node = document.createElement('button');
+            node.type = 'button';
+            node.className = `map-node ${displayState}`;
+            node.disabled = displayState === 'locked';
+            node.innerHTML = `
+                <span class="map-node-icon">
+                    <i data-lucide="${displayState === 'recent' ? 'sparkles' : displayState === 'available' ? 'zap' : displayState === 'overdue' ? 'alert-triangle' : 'lock'}" style="width: 18px; height: 18px;"></i>
+                </span>
+                <span class="map-node-info">
+                    <span class="map-node-title">${task.name}</span>
+                    <span class="map-node-meta">
+                        <span>${formatFrequency(task.frequency)}</span>
+                        <span>${formatTimeLabel(task.time)}</span>
+                        <span class="map-node-due">${displayState === 'recent' && daysSince === 0 ? 'Concluída hoje' : dueLabel}</span>
+                    </span>
+                </span>
+                <span class="map-node-state ${displayState}">${stateLabels[displayState]}</span>
+            `;
+            
+            if (!node.disabled) {
+                node.addEventListener('click', () => {
+                    updateMapDetail({
+                        title: task.name,
+                        stateLabel: stateLabels[displayState],
+                        description,
+                        timeLabel: formatTimeLabel(task.time),
+                        frequencyLabel: formatFrequency(task.frequency),
+                        lastDoneLabel: lastDone
+                    });
+                    initIcons();
+                });
+            }
+            
+            zoneNodes.appendChild(node);
+        });
+        
+        zoneWrap.appendChild(zoneHeader);
+        zoneWrap.appendChild(zoneNodes);
+        mapContainer.appendChild(zoneWrap);
     });
-    
-    const recommendations = getRecommendations();
-    renderRecommendationList('recommendations-today', recommendations.today, 'Nenhuma tarefa para hoje.');
-    renderRecommendationList('recommendations-week', recommendations.week, 'Nenhuma tarefa vencendo esta semana.');
-    renderRecommendationList('recommendations-next-week', recommendations.nextWeek, 'Nada previsto para a próxima semana.');
     
     initIcons();
 }
