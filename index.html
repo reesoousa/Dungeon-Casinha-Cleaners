@@ -786,7 +786,10 @@
         <!-- SETUP SCREEN -->
         <div id="screen-setup" class="screen active">
             <div class="setup-box">
-                <h1>⚔️ Bem-vindos!</h1>
+                <h1>
+                    <i data-lucide="sword" style="width: 28px; height: 28px;"></i>
+                    Bem-vindos!
+                </h1>
                 <p>Quem vai limpar a masmorra hoje?</p>
                 <div style="margin-top: 30px;">
                     <input type="text" id="p1-name" placeholder="Nome do Jogador 1" value="Renan">
@@ -820,7 +823,9 @@
             <div id="active-monsters" class="card-grid"></div>
             
             <div id="empty-dungeon" class="empty-state">
-                <div class="empty-state-icon">🏰</div>
+                <div class="empty-state-icon">
+                    <i data-lucide="castle" style="width: 64px; height: 64px;"></i>
+                </div>
                 <div class="empty-state-text">
                     A casa está limpa... por enquanto.<br>
                     <strong>Clique em "Invocar Tarefa"</strong> para começar!
@@ -874,7 +879,10 @@
     <!-- MODAL DE SELEÇÃO DE TAREFA -->
     <div id="task-modal" class="modal-overlay" onclick="handleModalOutsideClick(event)">
         <div class="modal" onclick="event.stopPropagation()">
-            <h2>🎴 Escolha uma Tarefa</h2>
+            <h2>
+                <i data-lucide="cards" style="width: 24px; height: 24px;"></i>
+                Escolha uma Tarefa
+            </h2>
             <p class="modal-subtitle">Toque em uma das cartas para invocar o monstro</p>
             <div id="task-selection-cards" class="task-selection-grid"></div>
             <button class="btn btn-block" onclick="closeTaskModal()">
@@ -887,7 +895,10 @@
     <!-- MODAL DE GERENCIAMENTO -->
     <div id="management-modal" class="modal-overlay" onclick="handleManagementOutsideClick(event)">
         <div class="modal" onclick="event.stopPropagation()">
-            <h2>⚙️ Gerenciar Monstros</h2>
+            <h2>
+                <i data-lucide="settings" style="width: 24px; height: 24px;"></i>
+                Gerenciar Monstros
+            </h2>
             <p class="modal-subtitle">Remova tarefas da mesa ou limpe tudo</p>
             
             <div class="management-list" id="management-list"></div>
@@ -1216,7 +1227,10 @@
                             <h4>${monster.name}</h4>
                             <div class="management-item-meta">
                                 <span class="card-difficulty ${monster.difficulty}">${difficultyLabels[monster.difficulty]}</span>
-                                <span>💰 ${monster.loot}</span>
+                                <span class="loot-badge">
+                                    <i data-lucide="coins" style="width: 14px; height: 14px;"></i>
+                                    ${monster.loot}
+                                </span>
                             </div>
                         </div>
                         <button class="icon-btn" onclick="removeMonster(${monster.id})">
@@ -1246,7 +1260,7 @@
             const index = gameState.activeMonsters.findIndex(m => m.id === id);
             if (index !== -1) {
                 const monster = gameState.activeMonsters[index];
-                if (confirm(`🗑️ Remover "${monster.name}" da mesa?`)) {
+                if (confirm(`Remover "${monster.name}" da mesa?`)) {
                     gameState.activeMonsters.splice(index, 1);
                     saveGame();
                     renderDungeon();
@@ -1257,11 +1271,11 @@
         
         function clearAllMonsters() {
             if (gameState.activeMonsters.length === 0) {
-                alert('⚠️ Não há monstros para limpar!');
+                alert('Não há monstros para limpar!');
                 return;
             }
             
-            if (confirm(`🗑️ Remover TODOS os ${gameState.activeMonsters.length} monstros da mesa?`)) {
+            if (confirm(`Remover TODOS os ${gameState.activeMonsters.length} monstros da mesa?`)) {
                 gameState.activeMonsters = [];
                 saveGame();
                 renderDungeon();
@@ -1397,11 +1411,11 @@
         function buyItem(index) {
             const item = gameState.shopItems[index];
             if (gameState.gold < item.cost) {
-                alert("⚠️ Ouro insuficiente! Vá limpar a casa!");
+                alert("Ouro insuficiente! Vá limpar a casa!");
                 return;
             }
             
-            if (confirm(`💰 Comprar "${item.name}" por ${item.cost} moedas?`)) {
+            if (confirm(`Comprar "${item.name}" por ${item.cost} moedas?`)) {
                 gameState.gold -= item.cost;
                 
                 gameState.purchaseHistory.unshift({
@@ -1414,17 +1428,17 @@
                 renderShop();
                 renderHistory();
                 
-                alert(`✅ Compra realizada!\n"${item.name}" desbloqueado!`);
+                alert(`Compra realizada!\n"${item.name}" desbloqueado!`);
             }
         }
         
         function addCustomReward() {
-            const name = prompt("🎁 Nome da Recompensa:\n(ex: Jantar no Japonês)");
+            const name = prompt("Nome da Recompensa:\n(ex: Jantar no Japonês)");
             if (!name || !name.trim()) return;
             
-            const cost = prompt("💰 Custo em Ouro:\n(ex: 300)");
+            const cost = prompt("Custo em Ouro:\n(ex: 300)");
             if (!cost || isNaN(cost) || cost <= 0) {
-                alert("⚠️ Valor inválido!");
+                alert("Valor inválido!");
                 return;
             }
             
@@ -1440,7 +1454,7 @@
         
         function deleteShopItem(index) {
             const item = gameState.shopItems[index];
-            if (confirm(`🗑️ Excluir "${item.name}" da loja?`)) {
+            if (confirm(`Excluir "${item.name}" da loja?`)) {
                 gameState.shopItems.splice(index, 1);
                 saveGame();
                 renderShop();
@@ -1477,10 +1491,13 @@
             if (gameState.activityLog.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">📜</div>
+                        <div class="empty-state-icon">
+                            <i data-lucide="scroll-text" style="width: 64px; height: 64px;"></i>
+                        </div>
                         <div class="empty-state-text">Nenhuma tarefa concluída ainda</div>
                     </div>
                 `;
+                initIcons();
                 return;
             }
             
@@ -1522,10 +1539,13 @@
             if (gameState.purchaseHistory.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">🛒</div>
+                        <div class="empty-state-icon">
+                            <i data-lucide="shopping-cart" style="width: 64px; height: 64px;"></i>
+                        </div>
                         <div class="empty-state-text">Nenhuma compra realizada ainda</div>
                     </div>
                 `;
+                initIcons();
                 return;
             }
             
