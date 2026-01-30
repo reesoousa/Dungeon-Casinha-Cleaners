@@ -107,6 +107,80 @@
             </div>
         </div>
 
+        <!-- MAP SCREEN -->
+        <div id="screen-map" class="screen">
+            <div class="section-title">
+                <i data-lucide="map" style="width: 30px; height: 30px;"></i>
+                <span>Mapa da Dungeon</span>
+            </div>
+
+            <div class="map-summary">
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <div>
+                            <div class="summary-title">Progresso da casa</div>
+                            <div class="summary-subtitle">Visão macro do que foi limpo</div>
+                        </div>
+                        <div class="summary-badge" id="map-progress-label">0% limpo hoje</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="map-progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <div class="summary-stats">
+                        <div class="summary-stat recent">
+                            <span>Concluídas</span>
+                            <strong id="map-count-recent">0</strong>
+                        </div>
+                        <div class="summary-stat available">
+                            <span>Disponíveis</span>
+                            <strong id="map-count-available">0</strong>
+                        </div>
+                        <div class="summary-stat overdue">
+                            <span>Atrasadas</span>
+                            <strong id="map-count-overdue">0</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="map-legend">
+                <div class="legend-item recent">
+                    <span class="legend-dot"></span>
+                    Concluída recentemente
+                </div>
+                <div class="legend-item available">
+                    <span class="legend-dot"></span>
+                    Disponível
+                </div>
+                <div class="legend-item overdue">
+                    <span class="legend-dot"></span>
+                    Atrasada
+                </div>
+            </div>
+
+            <div id="dungeon-map" class="dungeon-map"></div>
+
+            <div class="section-title">
+                <i data-lucide="sparkles" style="width: 30px; height: 30px;"></i>
+                <span>Recomendações</span>
+            </div>
+
+            <div class="recommendations-grid">
+                <div class="recommendation-column">
+                    <h3>Hoje</h3>
+                    <div id="recommendations-today" class="recommendation-list"></div>
+                </div>
+                <div class="recommendation-column">
+                    <h3>Esta semana</h3>
+                    <div id="recommendations-week" class="recommendation-list"></div>
+                </div>
+                <div class="recommendation-column">
+                    <h3>Próxima semana</h3>
+                    <div id="recommendations-next-week" class="recommendation-list"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- TAVERN SCREEN -->
         <div id="screen-tavern" class="screen">
             <div class="section-title">
@@ -195,6 +269,10 @@
         <button class="nav-btn active" onclick="switchTab('dungeon')">
             <i data-lucide="castle" style="width: 20px; height: 20px;"></i>
             <span>MASMORRA</span>
+        </button>
+        <button class="nav-btn" onclick="switchTab('map')">
+            <i data-lucide="map" style="width: 20px; height: 20px;"></i>
+            <span>MAPA</span>
         </button>
         <button class="nav-btn" onclick="switchTab('tavern')">
             <i data-lucide="shopping-bag" style="width: 20px; height: 20px;"></i>

@@ -14,56 +14,56 @@ if ('serviceWorker' in navigator) {
 // ============================================
 const TASK_DATABASE = {
     easy: [
-        { name: "Tirar o Lixo", loot: 10, difficulty: "easy", time: 5 },
-        { name: "Arrumar a Cama", loot: 10, difficulty: "easy", time: 5 },
-        { name: "Guardar Sapatos", loot: 8, difficulty: "easy", time: 5 },
-        { name: "Regar as Plantas", loot: 12, difficulty: "easy", time: 10 },
-        { name: "Guardar Louça Limpa", loot: 10, difficulty: "easy", time: 10 },
-        { name: "Limpar Espelho", loot: 11, difficulty: "easy", time: 5 },
-        { name: "Limpar a Mesa da Cozinha", loot: 9, difficulty: "easy", time: 5 },
-        { name: "Organizar Livros", loot: 10, difficulty: "easy", time: 10 },
-        { name: "Organizar Chinelos", loot: 7, difficulty: "easy", time: 5 },
-        { name: "Limpar Teclado", loot: 9, difficulty: "easy", time: 5 },
-        { name: "Limpar Caixinha do Juuj", loot: 9, difficulty: "easy", time: 5 },
-        { name: "Organizar estante da sala", loot: 10, difficulty: "easy", time: 10 },
-        { name: "Limpar Interruptores", loot: 7, difficulty: "easy", time: 5 }
+        { name: "Tirar o Lixo", loot: 10, difficulty: "easy", time: 5, frequency: "diária" },
+        { name: "Arrumar a Cama", loot: 10, difficulty: "easy", time: 5, frequency: "diária" },
+        { name: "Guardar Sapatos", loot: 8, difficulty: "easy", time: 5, frequency: "diária" },
+        { name: "Regar as Plantas", loot: 12, difficulty: "easy", time: 10, frequency: "semanal" },
+        { name: "Guardar Louça Limpa", loot: 10, difficulty: "easy", time: 10, frequency: "diária" },
+        { name: "Limpar Espelho", loot: 11, difficulty: "easy", time: 5, frequency: "semanal" },
+        { name: "Limpar a Mesa da Cozinha", loot: 9, difficulty: "easy", time: 5, frequency: "diária" },
+        { name: "Organizar Livros", loot: 10, difficulty: "easy", time: 10, frequency: "quinzenal" },
+        { name: "Organizar Chinelos", loot: 7, difficulty: "easy", time: 5, frequency: "semanal" },
+        { name: "Limpar Teclado", loot: 9, difficulty: "easy", time: 5, frequency: "quinzenal" },
+        { name: "Limpar Caixinha do Juuj", loot: 9, difficulty: "easy", time: 5, frequency: "semanal" },
+        { name: "Organizar estante da sala", loot: 10, difficulty: "easy", time: 10, frequency: "quinzenal" },
+        { name: "Limpar Interruptores", loot: 7, difficulty: "easy", time: 5, frequency: "quinzenal" }
     ],
     medium: [
-        { name: "Limpar e organizar mesas do Escritório", loot: 20, difficulty: "medium", time: 20 },
-        { name: "Dobrar Roupas", loot: 30, difficulty: "medium", time: 30 },
-        { name: "Lavar a Louça", loot: 28, difficulty: "medium", time: 30 },
-        { name: "Arrumar a sala", loot: 32, difficulty: "medium", time: 30 },
-        { name: "Pano de Prato de Molho", loot: 28, difficulty: "medium", time: 30 },
-        { name: "Limpar a Pia", loot: 22, difficulty: "medium", time: 15 },
-        { name: "Organizar Gavetas", loot: 26, difficulty: "medium", time: 15 },
-        { name: "Passar Aspirador ou Varrer", loot: 30, difficulty: "medium", time: 30 },
-        { name: "Limpar Fogão", loot: 32, difficulty: "medium", time: 30 },
-        { name: "Organizar Guarda-Roupa", loot: 28, difficulty: "medium", time: 30 },
-        { name: "Limpar Janelas", loot: 30, difficulty: "medium", time: 30 },
-        { name: "Organizar Despensa e lavanderia", loot: 27, difficulty: "medium", time: 30 },
-        { name: "Limpar Microondas", loot: 24, difficulty: "medium", time: 15 },
-        { name: "Passar Pano nos Móveis", loot: 26, difficulty: "medium", time: 15 },
-        { name: "Limpar Estantes", loot: 25, difficulty: "medium", time: 15 },
-        { name: "Lavar/Estender Roupa", loot: 35, difficulty: "medium", time: 20 },
-        { name: "Trocar Lençóis", loot: 23, difficulty: "medium", time: 15 }
+        { name: "Limpar e organizar mesas do Escritório", loot: 20, difficulty: "medium", time: 20, frequency: "semanal" },
+        { name: "Dobrar Roupas", loot: 30, difficulty: "medium", time: 30, frequency: "semanal" },
+        { name: "Lavar a Louça", loot: 28, difficulty: "medium", time: 30, frequency: "diária" },
+        { name: "Arrumar a sala", loot: 32, difficulty: "medium", time: 30, frequency: "semanal" },
+        { name: "Pano de Prato de Molho", loot: 28, difficulty: "medium", time: 30, frequency: "semanal" },
+        { name: "Limpar a Pia", loot: 22, difficulty: "medium", time: 15, frequency: "diária" },
+        { name: "Organizar Gavetas", loot: 26, difficulty: "medium", time: 15, frequency: "quinzenal" },
+        { name: "Passar Aspirador ou Varrer", loot: 30, difficulty: "medium", time: 30, frequency: "semanal" },
+        { name: "Limpar Fogão", loot: 32, difficulty: "medium", time: 30, frequency: "semanal" },
+        { name: "Organizar Guarda-Roupa", loot: 28, difficulty: "medium", time: 30, frequency: "quinzenal" },
+        { name: "Limpar Janelas", loot: 30, difficulty: "medium", time: 30, frequency: "quinzenal" },
+        { name: "Organizar Despensa e lavanderia", loot: 27, difficulty: "medium", time: 30, frequency: "quinzenal" },
+        { name: "Limpar Microondas", loot: 24, difficulty: "medium", time: 15, frequency: "semanal" },
+        { name: "Passar Pano nos Móveis", loot: 26, difficulty: "medium", time: 15, frequency: "semanal" },
+        { name: "Limpar Estantes", loot: 25, difficulty: "medium", time: 15, frequency: "quinzenal" },
+        { name: "Lavar/Estender Roupa", loot: 35, difficulty: "medium", time: 20, frequency: "semanal" },
+        { name: "Trocar Lençóis", loot: 23, difficulty: "medium", time: 15, frequency: "semanal" }
     ],
     hard: [
-        { name: "Varrer/Passar Pano", loot: 50, difficulty: "hard", time: 30 },
-        { name: "Lavar o Banheiro", loot: 60, difficulty: "hard", time: 60 },
-        { name: "Lavar a caixinha do juuj", loot: 60, difficulty: "hard", time: 30 },
-        { name: "Limpar a Cozinha", loot: 65, difficulty: "hard", time: 60 },
-        { name: "Aspirar Casa Toda", loot: 55, difficulty: "hard", time: 60 },
-        { name: "Limpar a Geladeira", loot: 70, difficulty: "hard", time: 60 },
-        { name: "Limpar chão da cozinha e armários", loot: 58, difficulty: "hard", time: 60 },
-        { name: "Organizar Guarda Roupa", loot: 62, difficulty: "hard", time: 60 },
-        { name: "Limpar Área Externa", loot: 68, difficulty: "hard", time: 60 },
-        { name: "Faxina na Sala", loot: 56, difficulty: "hard", time: 60 },
-        { name: "Limpar Todos os Vidros", loot: 54, difficulty: "hard", time: 60 },
-        { name: "Limpar Armários por Dentro", loot: 60, difficulty: "hard", time: 60 },
-        { name: "Faxina no Quarto", loot: 52, difficulty: "hard", time: 60 },
-        { name: "Limpar Paredes", loot: 58, difficulty: "hard", time: 60 },
-        { name: "Tirar o pó de trás dos pcs", loot: 48, difficulty: "hard", time: 30 },
-        { name: "Faxina Geral na Casa", loot: 75, difficulty: "hard", time: 60 }
+        { name: "Varrer/Passar Pano", loot: 50, difficulty: "hard", time: 30, frequency: "semanal" },
+        { name: "Lavar o Banheiro", loot: 60, difficulty: "hard", time: 60, frequency: "semanal" },
+        { name: "Lavar a caixinha do juuj", loot: 60, difficulty: "hard", time: 30, frequency: "semanal" },
+        { name: "Limpar a Cozinha", loot: 65, difficulty: "hard", time: 60, frequency: "semanal" },
+        { name: "Aspirar Casa Toda", loot: 55, difficulty: "hard", time: 60, frequency: "semanal" },
+        { name: "Limpar a Geladeira", loot: 70, difficulty: "hard", time: 60, frequency: "quinzenal" },
+        { name: "Limpar chão da cozinha e armários", loot: 58, difficulty: "hard", time: 60, frequency: "quinzenal" },
+        { name: "Organizar Guarda Roupa", loot: 62, difficulty: "hard", time: 60, frequency: "quinzenal" },
+        { name: "Limpar Área Externa", loot: 68, difficulty: "hard", time: 60, frequency: "quinzenal" },
+        { name: "Faxina na Sala", loot: 56, difficulty: "hard", time: 60, frequency: "quinzenal" },
+        { name: "Limpar Todos os Vidros", loot: 54, difficulty: "hard", time: 60, frequency: "quinzenal" },
+        { name: "Limpar Armários por Dentro", loot: 60, difficulty: "hard", time: 60, frequency: "quinzenal" },
+        { name: "Faxina no Quarto", loot: 52, difficulty: "hard", time: 60, frequency: "quinzenal" },
+        { name: "Limpar Paredes", loot: 58, difficulty: "hard", time: 60, frequency: "quinzenal" },
+        { name: "Tirar o pó de trás dos pcs", loot: 48, difficulty: "hard", time: 30, frequency: "quinzenal" },
+        { name: "Faxina Geral na Casa", loot: 75, difficulty: "hard", time: 60, frequency: "quinzenal" }
     ]
 };
 
@@ -74,6 +74,11 @@ const INITIAL_SHOP = [
 ];
 
 const DAILY_QUEST_TARGET = 2;
+const FREQUENCY_DAYS = {
+    diária: 1,
+    semanal: 7,
+    quinzenal: 14
+};
 
 let gameState = {
     players: [],
@@ -116,12 +121,109 @@ function getTaskByName(taskName) {
     return allTasks.find(task => task.name === taskName) || null;
 }
 
-function ensureTaskTimes() {
+function startOfDay(date) {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+}
+
+function getFrequencyDays(frequency) {
+    return FREQUENCY_DAYS[frequency] || 7;
+}
+
+function formatFrequency(frequency) {
+    if (!frequency) return 'Sem frequência';
+    return frequency.charAt(0).toUpperCase() + frequency.slice(1);
+}
+
+function ensureTaskMetadata() {
     gameState.activeMonsters = gameState.activeMonsters.map(monster => {
-        if (monster.time) return monster;
+        if (monster.time && monster.frequency) return monster;
         const match = getTaskByName(monster.name);
-        return { ...monster, time: match ? match.time : 10 };
+        return {
+            ...monster,
+            time: match ? match.time : 10,
+            frequency: match ? match.frequency : 'semanal',
+            difficulty: match ? match.difficulty : monster.difficulty,
+            loot: match ? match.loot : monster.loot
+        };
     });
+}
+
+function getTaskLastCompletionMap() {
+    const lastMap = new Map();
+    gameState.activityLog.forEach(entry => {
+        if (!entry || !entry.task || !entry.date) return;
+        const entryDate = new Date(entry.date);
+        const existing = lastMap.get(entry.task);
+        if (!existing || entryDate > existing) {
+            lastMap.set(entry.task, entryDate);
+        }
+    });
+    return lastMap;
+}
+
+function getTaskStatus(task, lastMap, todayStart) {
+    const lastDate = lastMap.get(task.name) || null;
+    const frequencyDays = getFrequencyDays(task.frequency);
+    if (!lastDate) {
+        return {
+            state: 'available',
+            lastDate: null,
+            daysSince: null,
+            dueDate: todayStart,
+            daysUntilDue: 0
+        };
+    }
+    const lastStart = startOfDay(lastDate);
+    const daysSince = Math.floor((todayStart - lastStart) / (1000 * 60 * 60 * 24));
+    const dueDate = new Date(lastStart.getTime() + frequencyDays * 24 * 60 * 60 * 1000);
+    const daysUntilDue = Math.ceil((dueDate - todayStart) / (1000 * 60 * 60 * 24));
+    if (daysSince < frequencyDays) {
+        return { state: 'recent', lastDate, daysSince, dueDate, daysUntilDue };
+    }
+    if (daysSince === frequencyDays) {
+        return { state: 'available', lastDate, daysSince, dueDate, daysUntilDue };
+    }
+    return { state: 'overdue', lastDate, daysSince, dueDate, daysUntilDue };
+}
+
+function getRecommendations() {
+    const todayStart = startOfDay(new Date());
+    const lastMap = getTaskLastCompletionMap();
+    const tasks = Object.values(TASK_DATABASE).flat();
+    const buckets = {
+        today: [],
+        week: [],
+        nextWeek: []
+    };
+    
+    tasks.forEach(task => {
+        const status = getTaskStatus(task, lastMap, todayStart);
+        const daysUntil = status.daysUntilDue;
+        if (daysUntil <= 0) {
+            buckets.today.push({ task, ...status });
+            return;
+        }
+        if (daysUntil <= 7) {
+            buckets.week.push({ task, ...status });
+            return;
+        }
+        if (daysUntil <= 14) {
+            buckets.nextWeek.push({ task, ...status });
+        }
+    });
+    
+    const sortByUrgency = (a, b) => {
+        if (a.daysUntilDue !== b.daysUntilDue) return a.daysUntilDue - b.daysUntilDue;
+        return a.task.time - b.task.time;
+    };
+    
+    buckets.today.sort(sortByUrgency);
+    buckets.week.sort(sortByUrgency);
+    buckets.nextWeek.sort(sortByUrgency);
+    
+    return buckets;
 }
 
 function getAvailableTasksByTime(timeAvailable) {
@@ -181,11 +283,12 @@ function init() {
             if (!gameState.timeAvailable) gameState.timeAvailable = null;
             
             if (gameState.initialized) {
-                ensureTaskTimes();
+                ensureTaskMetadata();
                 showGameInterface();
                 renderDungeon();
                 renderShop();
                 renderHistory();
+                renderMap();
                 updateGold();
                 renderTimeSelector();
                 renderDailyStatus();
@@ -221,6 +324,7 @@ function startGame() {
     renderDungeon();
     renderShop();
     renderHistory();
+    renderMap();
     renderTimeSelector();
     renderDailyStatus();
     
@@ -312,6 +416,7 @@ function refreshDailyStatusIfNeeded() {
     const todayKey = getTodayKey();
     if (todayKey !== currentDayKey) {
         renderDailyStatus();
+        renderMap();
     }
 }
 
@@ -323,10 +428,12 @@ function switchTab(tab) {
     
     const btns = document.querySelectorAll('.nav-btn');
     if (tab === 'dungeon') btns[0].classList.add('active');
-    if (tab === 'tavern') btns[1].classList.add('active');
-    if (tab === 'history') btns[2].classList.add('active');
+    if (tab === 'map') btns[1].classList.add('active');
+    if (tab === 'tavern') btns[2].classList.add('active');
+    if (tab === 'history') btns[3].classList.add('active');
     
     if (tab === 'history') renderHistory();
+    if (tab === 'map') renderMap();
     
     setTimeout(initIcons, 50);
 }
@@ -385,6 +492,10 @@ function openTaskModal() {
                 <div class="time-badge">
                     <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
                     ${formatTimeLabel(task.time)}
+                </div>
+                <div class="frequency-badge">
+                    <i data-lucide="repeat" style="width: 14px; height: 14px;"></i>
+                    ${formatFrequency(task.frequency)}
                 </div>
             </div>
         `;
@@ -466,6 +577,10 @@ function openManagementModal() {
                             <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
                             ${formatTimeLabel(monster.time)}
                         </span>
+                        <span class="frequency-badge">
+                            <i data-lucide="repeat" style="width: 14px; height: 14px;"></i>
+                            ${formatFrequency(monster.frequency)}
+                        </span>
                     </div>
                 </div>
                 <button class="icon-btn" onclick="removeMonster(${monster.id})">
@@ -542,6 +657,7 @@ function killMonster(id, playerIndex) {
     saveGame();
     renderDungeon();
     renderHistory();
+    renderMap();
     
     document.getElementById('total-gold').classList.add('pulse');
     setTimeout(() => {
@@ -592,6 +708,10 @@ function renderDungeon() {
                         <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
                         ${formatTimeLabel(monster.time)}
                     </div>
+                    <div class="frequency-badge">
+                        <i data-lucide="repeat" style="width: 14px; height: 14px;"></i>
+                        ${formatFrequency(monster.frequency)}
+                    </div>
                 </div>
                 <div class="card-actions">
                     <button class="btn btn-success btn-small" onclick="killMonster(${monster.id}, 0)">
@@ -608,6 +728,129 @@ function renderDungeon() {
         
         container.appendChild(card);
     });
+    
+    initIcons();
+}
+
+// ============================================
+// MAPA DA DUNGEON
+// ============================================
+function renderRecommendationList(containerId, items, emptyText) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    
+    if (!items.length) {
+        container.innerHTML = `<div class="recommendation-empty">${emptyText}</div>`;
+        return;
+    }
+    
+    items.forEach(({ task, daysUntilDue }) => {
+        const card = document.createElement('div');
+        card.className = 'recommendation-card';
+        const dueLabel = daysUntilDue < 0
+            ? `Atrasada há ${Math.abs(daysUntilDue)}d`
+            : daysUntilDue === 0
+                ? 'Vence hoje'
+                : `Vence em ${daysUntilDue}d`;
+        
+        card.innerHTML = `
+            <div class="recommendation-title">${task.name}</div>
+            <div class="recommendation-meta">
+                <span class="frequency-badge">
+                    <i data-lucide="repeat" style="width: 14px; height: 14px;"></i>
+                    ${formatFrequency(task.frequency)}
+                </span>
+                <span class="time-badge">
+                    <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
+                    ${formatTimeLabel(task.time)}
+                </span>
+            </div>
+            <div class="recommendation-due">${dueLabel}</div>
+        `;
+        
+        container.appendChild(card);
+    });
+}
+
+function renderMap() {
+    const mapContainer = document.getElementById('dungeon-map');
+    if (!mapContainer) return;
+    
+    const todayStart = startOfDay(new Date());
+    const lastMap = getTaskLastCompletionMap();
+    const tasks = Object.values(TASK_DATABASE).flat();
+    const statuses = tasks.map(task => ({
+        task,
+        ...getTaskStatus(task, lastMap, todayStart)
+    }));
+    
+    const counts = { recent: 0, available: 0, overdue: 0 };
+    statuses.forEach(status => {
+        counts[status.state] += 1;
+    });
+    
+    const progressPercent = tasks.length
+        ? Math.round((counts.recent / tasks.length) * 100)
+        : 0;
+    
+    const progressFill = document.getElementById('map-progress-fill');
+    const progressLabel = document.getElementById('map-progress-label');
+    const recentCount = document.getElementById('map-count-recent');
+    const availableCount = document.getElementById('map-count-available');
+    const overdueCount = document.getElementById('map-count-overdue');
+    
+    if (progressFill) progressFill.style.width = `${progressPercent}%`;
+    if (progressLabel) progressLabel.textContent = `${progressPercent}% limpo hoje`;
+    if (recentCount) recentCount.textContent = counts.recent;
+    if (availableCount) availableCount.textContent = counts.available;
+    if (overdueCount) overdueCount.textContent = counts.overdue;
+    
+    mapContainer.innerHTML = '';
+    const stateLabels = {
+        recent: 'Concluída recentemente',
+        available: 'Disponível',
+        overdue: 'Atrasada'
+    };
+    
+    statuses.forEach(({ task, state, lastDate, daysUntilDue }) => {
+        const node = document.createElement('div');
+        node.className = `map-node ${state}`;
+        const lastDone = lastDate
+            ? lastDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+            : 'Nunca';
+        const dueLabel = daysUntilDue < 0
+            ? `Atrasada há ${Math.abs(daysUntilDue)}d`
+            : daysUntilDue === 0
+                ? 'Vence hoje'
+                : `Vence em ${daysUntilDue}d`;
+        
+        node.innerHTML = `
+            <div class="map-node-header">
+                <span class="map-node-state ${state}">${stateLabels[state]}</span>
+                <span class="map-node-frequency">${formatFrequency(task.frequency)}</span>
+            </div>
+            <div class="map-node-title">${task.name}</div>
+            <div class="map-node-meta">
+                <span>
+                    <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
+                    ${formatTimeLabel(task.time)}
+                </span>
+                <span>
+                    <i data-lucide="calendar-check" style="width: 14px; height: 14px;"></i>
+                    ${lastDone}
+                </span>
+            </div>
+            <div class="map-node-due">${dueLabel}</div>
+        `;
+        
+        mapContainer.appendChild(node);
+    });
+    
+    const recommendations = getRecommendations();
+    renderRecommendationList('recommendations-today', recommendations.today, 'Nenhuma tarefa para hoje.');
+    renderRecommendationList('recommendations-week', recommendations.week, 'Nenhuma tarefa vencendo esta semana.');
+    renderRecommendationList('recommendations-next-week', recommendations.nextWeek, 'Nada previsto para a próxima semana.');
     
     initIcons();
 }
