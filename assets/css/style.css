@@ -456,6 +456,8 @@ select:focus {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 .loot-badge {
@@ -581,6 +583,8 @@ select:focus {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .modal-time {
@@ -597,6 +601,20 @@ select:focus {
     border-radius: 12px;
     font-weight: 800;
     font-size: 0.95rem;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 2px 0 #1a1a1a;
+}
+
+.frequency-badge {
+    background: #9B5DE5;
+    border: var(--stroke-thin);
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 0.9rem;
     color: white;
     display: inline-flex;
     align-items: center;
@@ -638,6 +656,7 @@ select:focus {
     gap: 12px;
     font-size: 0.9rem;
     color: #666;
+    flex-wrap: wrap;
 }
 
 /* ============================================
@@ -863,6 +882,253 @@ select:focus {
     background: #2a2a2a;
 }
 
+/* ============================================
+   MAPA DA DUNGEON
+============================================ */
+.map-summary {
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    background: var(--color-white);
+    border: var(--stroke);
+    box-shadow: var(--card-shadow);
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.summary-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.summary-subtitle {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.summary-badge {
+    background: var(--color-primary);
+    border: var(--stroke-thin);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-weight: 800;
+    box-shadow: 0 2px 0 #1a1a1a;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 14px;
+    border: var(--stroke-thin);
+    border-radius: 999px;
+    background: #efe3cf;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #95C95D 0%, #7AB04A 100%);
+    transition: width 0.3s ease;
+}
+
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.summary-stat {
+    background: var(--color-background);
+    border: var(--stroke-thin);
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.summary-stat strong {
+    display: block;
+    font-size: 1.4rem;
+}
+
+.summary-stat.recent { color: #3b6b1f; }
+.summary-stat.available { color: #2563eb; }
+.summary-stat.overdue { color: #b42318; }
+
+.map-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: var(--stroke-thin);
+    font-weight: 700;
+    background: var(--color-white);
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ccc;
+}
+
+.legend-item.recent .legend-dot { background: #95C95D; }
+.legend-item.available .legend-dot { background: #3B95D9; }
+.legend-item.overdue .legend-dot { background: #EF476F; }
+
+.dungeon-map {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 30px;
+}
+
+.map-node {
+    background: var(--color-white);
+    border: var(--stroke);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.map-node::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+    pointer-events: none;
+}
+
+.map-node-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.map-node-state {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: var(--stroke-thin);
+}
+
+.map-node-state.recent { background: #d7f4b0; }
+.map-node-state.available { background: #d4e7fb; }
+.map-node-state.overdue { background: #ffd1dc; }
+
+.map-node-frequency {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.map-node-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+}
+
+.map-node-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.map-node-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.map-node-due {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #1a1a1a;
+}
+
+.map-node.recent { border-color: #95C95D; }
+.map-node.available { border-color: #3B95D9; }
+.map-node.overdue { border-color: #EF476F; }
+
+.recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.recommendation-column h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+}
+
+.recommendation-list {
+    display: grid;
+    gap: 12px;
+}
+
+.recommendation-card {
+    background: var(--color-white);
+    border: var(--stroke-thin);
+    border-radius: 14px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.recommendation-title {
+    font-weight: 800;
+}
+
+.recommendation-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.recommendation-due {
+    font-weight: 700;
+    color: #444;
+}
+
+.recommendation-empty {
+    background: #f6efe4;
+    border: var(--stroke-thin);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    font-weight: 700;
+    color: #777;
+}
+
 @media (max-width: 640px) {
     .container {
         padding: 16px;
@@ -892,5 +1158,19 @@ select:focus {
     
     .actions-area {
         grid-template-columns: 1fr;
+    }
+
+    .summary-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .summary-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .map-node-meta {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
