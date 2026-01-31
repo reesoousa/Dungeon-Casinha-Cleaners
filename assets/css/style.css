@@ -163,11 +163,17 @@ header {
 }
 
 .logo {
-    font-family: 'Fredoka', sans-serif;
-    font-size: 1.1rem;
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.logo-image {
+    display: block;
+    max-height: clamp(32px, 4vw, 48px);
+    max-width: min(220px, 60vw);
+    width: auto;
+    height: auto;
 }
 
 .gold-display {
