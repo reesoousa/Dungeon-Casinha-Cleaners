@@ -376,7 +376,7 @@ function getRecommendations() {
     return buckets;
 }
 
-function getAvailableTasksByTime(timeAvailable) {
+function getAvailableTasksByTime(timeAvailable = gameState.timeAvailable) {
     const activeNames = new Set(getActiveTasksByType('normal').map(monster => monster.name));
     const allTasks = Object.values(TASK_DATABASE).flat();
     const timeFiltered = timeAvailable === 'infinite'
@@ -402,12 +402,12 @@ function getPendingTaskDraw() {
     return gameState.pendingTaskDraw;
 }
 
-function setPendingTaskDraw(tasks) {
+function setPendingTaskDraw(tasks, timeAvailable = gameState.timeAvailable) {
     gameState.pendingTaskDraw = {
         tasks: tasks.map(task => ({ ...task })),
         createdAt: new Date().toISOString(),
         dayKey: getTodayKey(),
-        timeAvailable: gameState.timeAvailable
+        timeAvailable
     };
     saveGame();
 }
@@ -476,12 +476,11 @@ function syncDailyState() {
         shouldSave = true;
     }
 
-    if (gameState.streakLastCompletionKey) {
-        const diff = getDayDiff(gameState.streakLastCompletionKey, todayKey);
-        if (diff !== null && diff >= 2 && gameState.streakCount > 0) {
-            gameState.streakCount = 0;
-            shouldSave = true;
-        }
+    const previousStreakCount = gameState.streakCount;
+    const previousStreakKey = gameState.streakLastCompletionKey;
+    refreshStreakState();
+    if (previousStreakCount !== gameState.streakCount || previousStreakKey !== gameState.streakLastCompletionKey) {
+        shouldSave = true;
     }
 
     if (shouldSave) {
@@ -489,36 +488,59 @@ function syncDailyState() {
     }
 }
 
-function updateStreakOnCompletion() {
-    const todayKey = getTodayKey();
-    const lastKey = gameState.streakLastCompletionKey;
-    if (!lastKey) {
-        gameState.streakCount = 1;
-        gameState.streakLastCompletionKey = todayKey;
-        return;
+function getCompletedTaskDayKeys() {
+    const dayKeys = new Set();
+    gameState.tasks.forEach(task => {
+        if (task.status !== 'completed' || !task.completedAt) return;
+        dayKeys.add(getDateKey(task.completedAt));
+    });
+    return Array.from(dayKeys);
+}
+
+function calculateStreakFromTasks() {
+    const dayKeys = getCompletedTaskDayKeys();
+    if (dayKeys.length === 0) {
+        return { count: 0, lastKey: null };
     }
-    const diff = getDayDiff(lastKey, todayKey);
-    if (diff === null) {
-        gameState.streakCount = 1;
-        gameState.streakLastCompletionKey = todayKey;
-        return;
-    }
-    if (diff === 0) {
-        if (!gameState.streakCount) {
-            gameState.streakCount = 1;
+
+    dayKeys.sort((a, b) => {
+        const aDate = parseDayKey(a);
+        const bDate = parseDayKey(b);
+        if (!aDate || !bDate) return 0;
+        return aDate - bDate;
+    });
+
+    const lastKey = dayKeys[dayKeys.length - 1];
+    let count = 1;
+    let currentKey = lastKey;
+
+    for (let i = dayKeys.length - 2; i >= 0; i -= 1) {
+        const diff = getDayDiff(dayKeys[i], currentKey);
+        if (diff === 1) {
+            count += 1;
+            currentKey = dayKeys[i];
+        } else if (diff > 1) {
+            break;
         }
-        gameState.streakLastCompletionKey = todayKey;
-        return;
     }
-    if (diff === 1) {
-        gameState.streakCount = Math.max(1, gameState.streakCount + 1);
-    } else {
-        gameState.streakCount = 1;
+
+    const todayKey = getTodayKey();
+    const diffToToday = getDayDiff(lastKey, todayKey);
+    if (diffToToday === null || diffToToday >= 2) {
+        return { count: 0, lastKey };
     }
-    gameState.streakLastCompletionKey = todayKey;
+
+    return { count, lastKey };
+}
+
+function refreshStreakState() {
+    const { count, lastKey } = calculateStreakFromTasks();
+    gameState.streakCount = count;
+    gameState.streakLastCompletionKey = lastKey;
 }
 
 function getStreakDisplayState() {
+    refreshStreakState();
     const todayKey = getTodayKey();
     const lastKey = gameState.streakLastCompletionKey;
     if (!lastKey || !gameState.streakCount) {
@@ -932,6 +954,13 @@ function selectTask(task) {
     };
     
     gameState.tasks.push(instanceTask);
+    const pending = getPendingTaskDraw();
+    if (pending) {
+        const { available } = getAvailableTasksByTime(pending.timeAvailable);
+        const rerollTasks = getRandomTasks(available, TASK_DRAW_COUNT);
+        setPendingTaskDraw(rerollTasks, pending.timeAvailable);
+        renderTaskRollStatus();
+    }
     saveGame();
     
     // FECHA O MODAL IMEDIATAMENTE
@@ -1176,7 +1205,7 @@ function killUrgentTask(id, playerIndex) {
         urgency: urgentTask.urgency,
         date: new Date().toISOString()
     });
-    updateStreakOnCompletion();
+    refreshStreakState();
 
     saveGame();
     renderDungeon();
@@ -1205,12 +1234,7 @@ function killMonster(id, playerIndex) {
         gold: monster.loot,
         date: new Date().toISOString()
     });
-    updateStreakOnCompletion();
-    
-    const pending = getPendingTaskDraw();
-    if (pending && pending.tasks.some(task => task.name === monster.name)) {
-        clearPendingTaskDraw();
-    }
+    refreshStreakState();
     
     saveGame();
     renderDungeon();
