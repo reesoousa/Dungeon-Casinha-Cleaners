@@ -74,6 +74,10 @@ const INITIAL_SHOP = [
 ];
 
 const DAILY_QUEST_TARGET = 2;
+const FREE_REROLLS_PER_DAY = 3;
+const STREAK_PROGRESS_TARGET = 7;
+const BRASILIA_OFFSET_MS = -3 * 60 * 60 * 1000;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const FREQUENCY_DAYS = {
     diária: 1,
     semanal: 7,
@@ -119,7 +123,10 @@ let gameState = {
     urgentDailyCount: 0,
     urgentDailyKey: null,
     urgentCooldownUntil: null,
-    freeDiscardTokens: 0
+    rerollDailyUsed: 0,
+    rerollDailyKey: null,
+    streakCount: 0,
+    streakLastCompletionKey: null
 };
 
 let currentDayKey = null;
@@ -136,7 +143,7 @@ function initIcons() {
 }
 
 function getDateKey(date) {
-    const parsed = new Date(date);
+    const parsed = getBrasiliaDate(date);
     const year = parsed.getFullYear();
     const month = String(parsed.getMonth() + 1).padStart(2, '0');
     const day = String(parsed.getDate()).padStart(2, '0');
@@ -145,6 +152,25 @@ function getDateKey(date) {
 
 function getTodayKey() {
     return getDateKey(new Date());
+}
+
+function getBrasiliaDate(date = new Date()) {
+    const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
+    return new Date(utcTime + BRASILIA_OFFSET_MS);
+}
+
+function parseDayKey(dayKey) {
+    if (!dayKey) return null;
+    const [year, month, day] = dayKey.split('-').map(Number);
+    if (!year || !month || !day) return null;
+    return new Date(Date.UTC(year, month - 1, day) - BRASILIA_OFFSET_MS);
+}
+
+function getDayDiff(fromKey, toKey) {
+    const fromDate = parseDayKey(fromKey);
+    const toDate = parseDayKey(toKey);
+    if (!fromDate || !toDate) return null;
+    return Math.round((toDate - fromDate) / MS_PER_DAY);
 }
 
 function ensureGameStateDefaults() {
@@ -159,7 +185,10 @@ function ensureGameStateDefaults() {
     if (typeof gameState.urgentDailyCount !== 'number') gameState.urgentDailyCount = 0;
     if (!gameState.urgentDailyKey) gameState.urgentDailyKey = getTodayKey();
     if (!gameState.urgentCooldownUntil) gameState.urgentCooldownUntil = null;
-    if (typeof gameState.freeDiscardTokens !== 'number') gameState.freeDiscardTokens = 0;
+    if (typeof gameState.rerollDailyUsed !== 'number') gameState.rerollDailyUsed = 0;
+    if (!gameState.rerollDailyKey) gameState.rerollDailyKey = getTodayKey();
+    if (typeof gameState.streakCount !== 'number') gameState.streakCount = 0;
+    if (!gameState.streakLastCompletionKey) gameState.streakLastCompletionKey = null;
     if (!gameState.pendingTaskDraw) gameState.pendingTaskDraw = null;
 }
 
@@ -173,9 +202,8 @@ function getTaskByName(taskName) {
 }
 
 function startOfDay(date) {
-    const normalized = new Date(date);
-    normalized.setHours(0, 0, 0, 0);
-    return normalized;
+    const brasiliaDate = getBrasiliaDate(date);
+    return new Date(Date.UTC(brasiliaDate.getFullYear(), brasiliaDate.getMonth(), brasiliaDate.getDate()) - BRASILIA_OFFSET_MS);
 }
 
 function getFrequencyDays(frequency) {
@@ -354,12 +382,113 @@ function getDailyProgress() {
     
     return progress;
 }
+
+function syncDailyState() {
+    const todayKey = getTodayKey();
+    let shouldSave = false;
+
+    if (gameState.pendingTaskDraw && gameState.pendingTaskDraw.dayKey !== todayKey) {
+        gameState.pendingTaskDraw = null;
+        shouldSave = true;
+    }
+
+    if (gameState.urgentDailyKey !== todayKey) {
+        gameState.urgentDailyCount = 0;
+        gameState.urgentDailyKey = todayKey;
+        gameState.urgentCooldownUntil = null;
+        shouldSave = true;
+    }
+
+    if (gameState.rerollDailyKey !== todayKey) {
+        gameState.rerollDailyUsed = 0;
+        gameState.rerollDailyKey = todayKey;
+        shouldSave = true;
+    }
+
+    if (gameState.streakLastCompletionKey) {
+        const diff = getDayDiff(gameState.streakLastCompletionKey, todayKey);
+        if (diff !== null && diff >= 2 && gameState.streakCount > 0) {
+            gameState.streakCount = 0;
+            shouldSave = true;
+        }
+    }
+
+    if (shouldSave) {
+        saveGame();
+    }
+}
+
+function updateStreakOnCompletion() {
+    const todayKey = getTodayKey();
+    const lastKey = gameState.streakLastCompletionKey;
+    if (!lastKey) {
+        gameState.streakCount = 1;
+        gameState.streakLastCompletionKey = todayKey;
+        return;
+    }
+    const diff = getDayDiff(lastKey, todayKey);
+    if (diff === 0) {
+        return;
+    }
+    if (diff === 1) {
+        gameState.streakCount = Math.max(1, gameState.streakCount + 1);
+    } else {
+        gameState.streakCount = 1;
+    }
+    gameState.streakLastCompletionKey = todayKey;
+}
+
+function getStreakDisplayState() {
+    const todayKey = getTodayKey();
+    const lastKey = gameState.streakLastCompletionKey;
+    if (!lastKey || !gameState.streakCount) {
+        return {
+            count: 0,
+            subtitle: 'Complete 1 tarefa para iniciar nova sequência.'
+        };
+    }
+    const diff = getDayDiff(lastKey, todayKey);
+    if (diff === 0) {
+        return {
+            count: gameState.streakCount,
+            subtitle: 'Brilho mantido hoje!'
+        };
+    }
+    if (diff === 1) {
+        return {
+            count: gameState.streakCount,
+            subtitle: 'Complete 1 tarefa hoje para manter o brilho!'
+        };
+    }
+    return {
+        count: 0,
+        subtitle: 'Sequência pausada. Complete 1 tarefa para recomeçar.'
+    };
+}
+
+function renderStreakStatus() {
+    const fillEl = document.getElementById('streak-fill');
+    const metaEl = document.getElementById('streak-meta');
+    const subtitleEl = document.getElementById('streak-subtitle');
+    if (!fillEl || !metaEl || !subtitleEl) return;
+
+    const state = getStreakDisplayState();
+    const progressPercent = Math.min(100, Math.round((state.count / STREAK_PROGRESS_TARGET) * 100));
+    fillEl.style.width = `${progressPercent}%`;
+    subtitleEl.textContent = state.subtitle;
+    if (state.count > 0) {
+        metaEl.textContent = `Sequência ativa: ${state.count} dia${state.count > 1 ? 's' : ''}`;
+    } else {
+        metaEl.textContent = 'Sem sequência ativa';
+    }
+}
 function init() {
     const saved = localStorage.getItem('dungeonCleanersSave');
     if (saved) {
         try {
             gameState = JSON.parse(saved);
             ensureGameStateDefaults();
+            syncDailyState();
             
             if (gameState.initialized) {
                 ensureTaskMetadata();
@@ -372,6 +501,7 @@ function init() {
                 renderTimeSelector();
                 renderDailyStatus();
                 renderTaskRollStatus();
+                renderStreakStatus();
             }
         } catch (e) {
             console.error('Erro ao carregar save:', e);
@@ -399,6 +529,7 @@ function startGame() {
     gameState.players = [p1, p2];
     gameState.initialized = true;
     gameState.urgentDailyKey = getTodayKey();
+    gameState.rerollDailyKey = getTodayKey();
     
     saveGame();
     showGameInterface();
@@ -408,6 +539,7 @@ function startGame() {
     renderMap();
     renderTimeSelector();
     renderDailyStatus();
+    renderStreakStatus();
     
     setTimeout(initIcons, 100);
 }
@@ -466,14 +598,16 @@ function setTaskFeedback(message) {
 function renderTaskRollStatus() {
     const statusEl = document.getElementById('task-roll-status');
     if (!statusEl) return;
+    syncDailyState();
     const pending = getPendingTaskDraw();
     if (pending) {
         statusEl.classList.remove('is-hidden');
         const timeLabel = pending.timeAvailable === 'infinite'
             ? 'Tempo livre'
             : `Tempo ${formatTimeLabel(pending.timeAvailable)}`;
-        const tokenLabel = gameState.freeDiscardTokens > 0
-            ? `Você tem ${gameState.freeDiscardTokens} descarte grátis.`
+        const remainingFree = Math.max(0, FREE_REROLLS_PER_DAY - (gameState.rerollDailyUsed || 0));
+        const tokenLabel = remainingFree > 0
+            ? `Você tem ${remainingFree} reroll${remainingFree > 1 ? 's' : ''} grátis hoje.`
             : `Descarte custa ${TASK_DRAW_DISCARD_COST} moedas.`;
         statusEl.innerHTML = `
             <strong>Cartas disponíveis no momento:</strong> 3 tarefas fixas (${timeLabel}).
@@ -490,8 +624,9 @@ function canDiscardTaskRoll() {
     if (!pending) {
         return { allowed: false, label: 'Sem cartas para descartar' };
     }
-    if (gameState.freeDiscardTokens > 0) {
-        return { allowed: true, label: 'Descartar 3 cartas (grátis)' };
+    const remainingFree = Math.max(0, FREE_REROLLS_PER_DAY - (gameState.rerollDailyUsed || 0));
+    if (remainingFree > 0) {
+        return { allowed: true, label: `Descartar 3 cartas (grátis ${remainingFree}/${FREE_REROLLS_PER_DAY})` };
     }
     if (gameState.gold >= TASK_DRAW_DISCARD_COST) {
         return { allowed: true, label: `Descartar 3 cartas (-${TASK_DRAW_DISCARD_COST} moedas)` };
@@ -507,12 +642,13 @@ function discardTaskRoll() {
         alert('Você não tem moedas suficientes para descartar agora.');
         return;
     }
-    const message = gameState.freeDiscardTokens > 0
-        ? 'Descartar as 3 cartas usando um descarte grátis?'
+    const remainingFree = Math.max(0, FREE_REROLLS_PER_DAY - (gameState.rerollDailyUsed || 0));
+    const message = remainingFree > 0
+        ? 'Descartar as 3 cartas usando um reroll grátis?'
         : `Descartar as 3 cartas por ${TASK_DRAW_DISCARD_COST} moedas?`;
     if (!confirm(message)) return;
-    if (gameState.freeDiscardTokens > 0) {
-        gameState.freeDiscardTokens -= 1;
+    if (remainingFree > 0) {
+        gameState.rerollDailyUsed += 1;
     } else {
         gameState.gold = Math.max(0, gameState.gold - TASK_DRAW_DISCARD_COST);
     }
@@ -525,7 +661,7 @@ function discardTaskRoll() {
 
 function renderDailyStatus() {
     const dayElement = document.getElementById('current-day');
-    const today = new Date();
+    const today = getBrasiliaDate(new Date());
     const dateLabel = today.toLocaleDateString('pt-BR', {
         weekday: 'long',
         day: '2-digit',
@@ -557,18 +693,13 @@ function renderDailyStatus() {
     
     currentDayKey = getTodayKey();
     initIcons();
+    renderStreakStatus();
 }
 
 function refreshDailyStatusIfNeeded() {
     const todayKey = getTodayKey();
     if (todayKey !== currentDayKey) {
-        if (gameState.pendingTaskDraw) {
-            gameState.pendingTaskDraw = null;
-        }
-        gameState.urgentDailyCount = 0;
-        gameState.urgentDailyKey = todayKey;
-        gameState.urgentCooldownUntil = null;
-        saveGame();
+        syncDailyState();
         renderDailyStatus();
         renderMap();
         renderTaskRollStatus();
@@ -603,6 +734,7 @@ function openTaskModal() {
     const modalNote = document.getElementById('task-roll-note');
     const discardBtn = document.getElementById('discard-task-roll');
     container.innerHTML = '';
+    syncDailyState();
 
     const pending = getPendingTaskDraw();
     let tasks = [];
@@ -949,10 +1081,6 @@ function killUrgentTask(id, playerIndex) {
 
     gameState.gold += urgentTask.loot;
 
-    if (urgentTask.urgency === 'critical') {
-        gameState.freeDiscardTokens += 1;
-    }
-
     gameState.activityLog.unshift({
         player: player,
         task: urgentTask.name,
@@ -961,6 +1089,7 @@ function killUrgentTask(id, playerIndex) {
         urgency: urgentTask.urgency,
         date: new Date().toISOString()
     });
+    updateStreakOnCompletion();
 
     gameState.urgentTasks.splice(urgentIndex, 1);
 
@@ -968,6 +1097,7 @@ function killUrgentTask(id, playerIndex) {
     renderDungeon();
     renderHistory();
     renderMap();
+    renderStreakStatus();
 
     document.getElementById('total-gold').classList.add('pulse');
     setTimeout(() => {
@@ -990,6 +1120,7 @@ function killMonster(id, playerIndex) {
         gold: monster.loot,
         date: new Date().toISOString()
     });
+    updateStreakOnCompletion();
     
     gameState.activeMonsters.splice(monsterIndex, 1);
 
@@ -1002,6 +1133,7 @@ function killMonster(id, playerIndex) {
     renderDungeon();
     renderHistory();
     renderMap();
+    renderStreakStatus();
     
     document.getElementById('total-gold').classList.add('pulse');
     setTimeout(() => {
