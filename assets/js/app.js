@@ -112,8 +112,7 @@ const URGENCY_CONFIG = {
 let gameState = {
     players: [],
     gold: 0,
-    activeMonsters: [],
-    urgentTasks: [],
+    tasks: [],
     shopItems: JSON.parse(JSON.stringify(INITIAL_SHOP)),
     initialized: false,
     activityLog: [],
@@ -174,8 +173,7 @@ function getDayDiff(fromKey, toKey) {
 }
 
 function ensureGameStateDefaults() {
-    if (!Array.isArray(gameState.activeMonsters)) gameState.activeMonsters = [];
-    if (!Array.isArray(gameState.urgentTasks)) gameState.urgentTasks = [];
+    if (!Array.isArray(gameState.tasks)) gameState.tasks = [];
     if (!Array.isArray(gameState.activityLog)) gameState.activityLog = [];
     if (!Array.isArray(gameState.purchaseHistory)) gameState.purchaseHistory = [];
     if (!gameState.timeAvailable) gameState.timeAvailable = 'infinite';
@@ -190,6 +188,8 @@ function ensureGameStateDefaults() {
     if (typeof gameState.streakCount !== 'number') gameState.streakCount = 0;
     if (!gameState.streakLastCompletionKey) gameState.streakLastCompletionKey = null;
     if (!gameState.pendingTaskDraw) gameState.pendingTaskDraw = null;
+    migrateLegacyTasks();
+    ensureTaskMetadata();
 }
 
 function getUrgencyConfig(level) {
@@ -216,17 +216,81 @@ function formatFrequency(frequency) {
 }
 
 function ensureTaskMetadata() {
-    gameState.activeMonsters = gameState.activeMonsters.map(monster => {
-        if (monster.time && monster.frequency) return monster;
-        const match = getTaskByName(monster.name);
+    gameState.tasks = gameState.tasks.map(task => {
+        if (task.type === 'urgent') {
+            return {
+                ...task,
+                timeEstimate: task.timeEstimate ?? 'infinite',
+                timeLabel: task.timeLabel ?? (task.timeEstimate === 'infinite' ? 'Tempo aberto' : formatTimeLabel(task.timeEstimate))
+            };
+        }
+        const match = getTaskByName(task.name);
+        if (!match) return task;
         return {
-            ...monster,
-            time: match ? match.time : 10,
-            frequency: match ? match.frequency : 'semanal',
-            difficulty: match ? match.difficulty : monster.difficulty,
-            loot: match ? match.loot : monster.loot
+            ...task,
+            time: task.time ?? match.time,
+            frequency: task.frequency ?? match.frequency,
+            difficulty: task.difficulty ?? match.difficulty,
+            loot: task.loot ?? match.loot
         };
     });
+}
+
+function migrateLegacyTasks() {
+    const hasLegacy = Array.isArray(gameState.activeMonsters) && gameState.activeMonsters.length > 0
+        || Array.isArray(gameState.urgentTasks) && gameState.urgentTasks.length > 0;
+    if (!hasLegacy) {
+        gameState.activeMonsters = [];
+        gameState.urgentTasks = [];
+        return;
+    }
+    const existingIds = new Set(gameState.tasks.map(task => task.id));
+    const addTaskIfMissing = (task) => {
+        if (existingIds.has(task.id)) return;
+        gameState.tasks.push(task);
+        existingIds.add(task.id);
+    };
+    if (Array.isArray(gameState.activeMonsters)) {
+        gameState.activeMonsters.forEach(monster => {
+            addTaskIfMissing({
+                ...monster,
+                id: monster.id || Date.now() + Math.random(),
+                type: 'normal',
+                status: 'active',
+                createdAt: monster.createdAt || new Date().toISOString(),
+                completedAt: null
+            });
+        });
+    }
+    if (Array.isArray(gameState.urgentTasks)) {
+        gameState.urgentTasks.forEach(task => {
+            addTaskIfMissing({
+                ...task,
+                id: task.id || Date.now() + Math.random(),
+                type: 'urgent',
+                status: 'active',
+                createdAt: task.createdAt || new Date().toISOString(),
+                completedAt: null
+            });
+        });
+    }
+    gameState.activeMonsters = [];
+    gameState.urgentTasks = [];
+}
+
+function getActiveTasksByType(type) {
+    return gameState.tasks.filter(task => task.type === type && task.status === 'active');
+}
+
+function findTaskById(id) {
+    return gameState.tasks.find(task => task.id === id) || null;
+}
+
+function removeTaskById(id) {
+    const index = gameState.tasks.findIndex(task => task.id === id);
+    if (index === -1) return false;
+    gameState.tasks.splice(index, 1);
+    return true;
 }
 
 function getTaskLastCompletionMap() {
@@ -306,7 +370,7 @@ function getRecommendations() {
 }
 
 function getAvailableTasksByTime(timeAvailable) {
-    const activeNames = new Set(gameState.activeMonsters.map(monster => monster.name));
+    const activeNames = new Set(getActiveTasksByType('normal').map(monster => monster.name));
     const allTasks = Object.values(TASK_DATABASE).flat();
     const timeFiltered = timeAvailable === 'infinite'
         ? allTasks
@@ -491,7 +555,6 @@ function init() {
             syncDailyState();
             
             if (gameState.initialized) {
-                ensureTaskMetadata();
                 showGameInterface();
                 renderDungeon();
                 renderShop();
@@ -786,7 +849,7 @@ function openTaskModal() {
         discardBtn.innerHTML = canDiscard.label;
     }
     
-    const activeNames = new Set(gameState.activeMonsters.map(monster => monster.name));
+    const activeNames = new Set(getActiveTasksByType('normal').map(monster => monster.name));
     tasks.forEach(task => {
         const card = document.createElement('div');
         card.className = 'task-selection-card';
@@ -840,15 +903,19 @@ function handleModalOutsideClick(event) {
 }
 
 function selectTask(task) {
-    if (gameState.activeMonsters.some(monster => monster.name === task.name)) {
+    if (getActiveTasksByType('normal').some(monster => monster.name === task.name)) {
         return;
     }
     const instanceTask = {
         ...task,
-        id: Date.now() + Math.random()
+        id: Date.now() + Math.random(),
+        type: 'normal',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        completedAt: null
     };
     
-    gameState.activeMonsters.push(instanceTask);
+    gameState.tasks.push(instanceTask);
     saveGame();
     
     // FECHA O MODAL IMEDIATAMENTE
@@ -958,10 +1025,13 @@ function createUrgentTask() {
         timeLabel,
         loot,
         rewardLabel: urgency.bonusLabel,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        type: 'urgent',
+        status: 'active',
+        completedAt: null
     };
 
-    gameState.urgentTasks.unshift(urgentTask);
+    gameState.tasks.unshift(urgentTask);
     gameState.urgentDailyCount += 1;
     gameState.urgentDailyKey = todayKey;
     gameState.urgentCooldownUntil = new Date(now + URGENT_COOLDOWN_MINUTES * 60 * 1000).toISOString();
@@ -983,7 +1053,8 @@ function openManagementModal() {
     const container = document.getElementById('management-list');
     container.innerHTML = '';
     
-    if (gameState.activeMonsters.length === 0) {
+    const activeMonsters = getActiveTasksByType('normal');
+    if (activeMonsters.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-text">Nenhum monstro na mesa</div>
@@ -996,7 +1067,7 @@ function openManagementModal() {
             hard: 'Difícil'
         };
         
-        gameState.activeMonsters.forEach((monster, index) => {
+        activeMonsters.forEach((monster, index) => {
             const item = document.createElement('div');
             item.className = 'management-item';
             
@@ -1043,11 +1114,10 @@ function handleManagementOutsideClick(event) {
 }
 
 function removeMonster(id) {
-    const index = gameState.activeMonsters.findIndex(m => m.id === id);
-    if (index !== -1) {
-        const monster = gameState.activeMonsters[index];
+    const monster = findTaskById(id);
+    if (monster) {
         if (confirm(`Remover "${monster.name}" da mesa?`)) {
-            gameState.activeMonsters.splice(index, 1);
+            removeTaskById(id);
             saveGame();
             renderDungeon();
             openManagementModal(); // Recarrega o modal
@@ -1056,13 +1126,14 @@ function removeMonster(id) {
 }
 
 function clearAllMonsters() {
-    if (gameState.activeMonsters.length === 0) {
+    const activeMonsters = getActiveTasksByType('normal');
+    if (activeMonsters.length === 0) {
         alert('Não há monstros para limpar!');
         return;
     }
     
-    if (confirm(`Remover TODOS os ${gameState.activeMonsters.length} monstros da mesa?`)) {
-        gameState.activeMonsters = [];
+    if (confirm(`Remover TODOS os ${activeMonsters.length} monstros da mesa?`)) {
+        gameState.tasks = gameState.tasks.filter(task => !(task.type === 'normal' && task.status === 'active'));
         saveGame();
         renderDungeon();
         closeManagementModal();
@@ -1073,14 +1144,14 @@ function clearAllMonsters() {
 // MECÂNICA: MASMORRA
 // ============================================
 function killUrgentTask(id, playerIndex) {
-    const urgentIndex = gameState.urgentTasks.findIndex(task => task.id === id);
-    if (urgentIndex === -1) return;
-
-    const urgentTask = gameState.urgentTasks[urgentIndex];
+    const urgentTask = findTaskById(id);
+    if (!urgentTask || urgentTask.type !== 'urgent' || urgentTask.status !== 'active') return;
     const player = gameState.players[playerIndex];
 
     gameState.gold += urgentTask.loot;
 
+    urgentTask.status = 'completed';
+    urgentTask.completedAt = new Date().toISOString();
     gameState.activityLog.unshift({
         player: player,
         task: urgentTask.name,
@@ -1090,8 +1161,6 @@ function killUrgentTask(id, playerIndex) {
         date: new Date().toISOString()
     });
     updateStreakOnCompletion();
-
-    gameState.urgentTasks.splice(urgentIndex, 1);
 
     saveGame();
     renderDungeon();
@@ -1106,14 +1175,14 @@ function killUrgentTask(id, playerIndex) {
 }
 
 function killMonster(id, playerIndex) {
-    const monsterIndex = gameState.activeMonsters.findIndex(m => m.id === id);
-    if (monsterIndex === -1) return;
-    
-    const monster = gameState.activeMonsters[monsterIndex];
+    const monster = findTaskById(id);
+    if (!monster || monster.type !== 'normal' || monster.status !== 'active') return;
     const player = gameState.players[playerIndex];
     
     gameState.gold += monster.loot;
     
+    monster.status = 'completed';
+    monster.completedAt = new Date().toISOString();
     gameState.activityLog.unshift({
         player: player,
         task: monster.name,
@@ -1122,8 +1191,6 @@ function killMonster(id, playerIndex) {
     });
     updateStreakOnCompletion();
     
-    gameState.activeMonsters.splice(monsterIndex, 1);
-
     const pending = getPendingTaskDraw();
     if (pending && pending.tasks.some(task => task.name === monster.name)) {
         clearPendingTaskDraw();
@@ -1148,13 +1215,14 @@ function renderUrgentTasks() {
 
     container.innerHTML = '';
 
-    if (gameState.urgentTasks.length === 0) {
+    const urgentTasks = getActiveTasksByType('urgent');
+    if (urgentTasks.length === 0) {
         section.style.display = 'none';
         return;
     }
 
     section.style.display = 'block';
-    gameState.urgentTasks.forEach(task => {
+    urgentTasks.forEach(task => {
         const urgency = getUrgencyConfig(task.urgency);
         const card = document.createElement('div');
         card.className = `urgent-card urgency-${task.urgency}`;
@@ -1207,7 +1275,9 @@ function renderDungeon() {
     renderTaskRollStatus();
     renderUrgentTasks();
     
-    if (gameState.activeMonsters.length === 0 && gameState.urgentTasks.length === 0) {
+    const activeMonsters = getActiveTasksByType('normal');
+    const urgentTasks = getActiveTasksByType('urgent');
+    if (activeMonsters.length === 0 && urgentTasks.length === 0) {
         emptyState.style.display = 'block';
         return;
     } else {
@@ -1220,7 +1290,7 @@ function renderDungeon() {
         hard: 'Difícil'
     };
     
-    gameState.activeMonsters.forEach(monster => {
+    activeMonsters.forEach(monster => {
         const card = document.createElement('div');
         card.className = 'tcg-card';
         
