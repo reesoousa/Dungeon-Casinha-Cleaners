@@ -170,6 +170,14 @@ header {
     gap: 10px;
 }
 
+.logo-image {
+    display: block;
+    height: clamp(28px, 4vw, 40px);
+    width: auto;
+    max-width: min(240px, 50vw);
+    object-fit: contain;
+}
+
 .gold-display {
     background: var(--color-primary);
     border: var(--stroke-thin);
