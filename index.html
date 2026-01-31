@@ -14,9 +14,14 @@
             <i data-lucide="castle" style="width: 26px; height: 26px;"></i>
             <span>DUNGEON CLEANERS</span>
         </div>
-        <div class="gold-display">
-            <i data-lucide="coins" style="width: 22px; height: 22px;"></i>
-            <span id="total-gold">0</span>
+        <div class="header-actions">
+            <div class="gold-display">
+                <i data-lucide="coins" style="width: 22px; height: 22px;"></i>
+                <span id="total-gold">0</span>
+            </div>
+            <button class="icon-btn header-action" onclick="openManagementModal()" aria-label="Gerenciar">
+                <i data-lucide="settings" style="width: 22px; height: 22px;"></i>
+            </button>
         </div>
     </header>
 
@@ -62,6 +67,22 @@
                 </div>
             </div>
 
+            <div class="streak-card">
+                <div class="streak-icon">
+                    <i data-lucide="star" style="width: 26px; height: 26px;"></i>
+                </div>
+                <div class="streak-content">
+                    <div class="streak-title">Dias seguidos cuidando da dungeon</div>
+                    <div class="streak-subtitle">Complete 1 tarefa hoje para manter o brilho!</div>
+                    <div class="streak-progress">
+                        <div class="streak-bar">
+                            <div class="streak-fill" style="width: 60%;"></div>
+                        </div>
+                        <span class="streak-meta">Sequência ativa: 3 dias</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="time-selector">
                 <label for="time-available">Tempo disponível</label>
                 <div class="time-selector-controls">
@@ -79,35 +100,28 @@
             </div>
 
             <div class="actions-area">
-                <button class="btn btn-info" onclick="openTaskModal()">
+                <button class="btn btn-primary action-primary" onclick="openTaskModal()">
                     <i data-lucide="sword" style="width: 24px; height: 24px;"></i>
                     Invocar Tarefa
                 </button>
-                <button class="btn btn-danger" onclick="openUrgentModal()">
-                    <i data-lucide="alert-triangle" style="width: 24px; height: 24px;"></i>
-                    Invocar Monstro Urgente
-                </button>
-                <button class="btn btn-primary" onclick="openManagementModal()">
-                    <i data-lucide="settings" style="width: 24px; height: 24px;"></i>
-                    Gerenciar
-                </button>
+                <div class="actions-secondary">
+                    <button class="btn btn-danger action-secondary" onclick="openUrgentModal()">
+                        <i data-lucide="bell-ring" style="width: 22px; height: 22px;"></i>
+                        Monstro Urgente
+                    </button>
+                </div>
             </div>
 
             <div class="task-roll-status" id="task-roll-status"></div>
 
-            <div class="section-title urgent-title">
-                <i data-lucide="alert-triangle" style="width: 30px; height: 30px;"></i>
-                <span>Emergências Ativas</span>
-            </div>
-
-            <div id="urgent-tasks" class="urgent-grid"></div>
-
-            <div id="empty-urgent" class="empty-state urgent-empty">
-                <div class="empty-state-text">
-                    Nenhuma emergência ativa agora.<br>
-                    <strong>Use "Invocar Monstro Urgente"</strong> se algo inesperado surgir.
+            <section id="urgent-section" class="urgent-section">
+                <div class="section-title urgent-title">
+                    <i data-lucide="bell-ring" style="width: 30px; height: 30px;"></i>
+                    <span>Monstros Urgentes Emergentes!</span>
                 </div>
-            </div>
+
+                <div id="urgent-tasks" class="urgent-grid"></div>
+            </section>
 
             <div class="section-title">
                 <i data-lucide="flame" style="width: 30px; height: 30px;"></i>
@@ -118,11 +132,11 @@
 
             <div id="empty-dungeon" class="empty-state">
                 <div class="empty-state-icon">
-                    <i data-lucide="castle" style="width: 64px; height: 64px;"></i>
+                    <i data-lucide="shield" style="width: 64px; height: 64px;"></i>
                 </div>
                 <div class="empty-state-text">
-                    A casa está limpa... por enquanto.<br>
-                    <strong>Clique em "Invocar Tarefa"</strong> para começar!
+                    Prepare sua masmorra — gere suas tarefas!<br>
+                    <strong>Invocar Tarefa</strong> abre novas cartas para hoje.
                 </div>
             </div>
         </div>
