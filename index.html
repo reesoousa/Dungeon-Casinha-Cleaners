@@ -83,10 +83,30 @@
                     <i data-lucide="sword" style="width: 24px; height: 24px;"></i>
                     Invocar Tarefa
                 </button>
+                <button class="btn btn-danger" onclick="openUrgentModal()">
+                    <i data-lucide="alert-triangle" style="width: 24px; height: 24px;"></i>
+                    Invocar Monstro Urgente
+                </button>
                 <button class="btn btn-primary" onclick="openManagementModal()">
                     <i data-lucide="settings" style="width: 24px; height: 24px;"></i>
                     Gerenciar
                 </button>
+            </div>
+
+            <div class="task-roll-status" id="task-roll-status"></div>
+
+            <div class="section-title urgent-title">
+                <i data-lucide="alert-triangle" style="width: 30px; height: 30px;"></i>
+                <span>Emergências Ativas</span>
+            </div>
+
+            <div id="urgent-tasks" class="urgent-grid"></div>
+
+            <div id="empty-urgent" class="empty-state urgent-empty">
+                <div class="empty-state-text">
+                    Nenhuma emergência ativa agora.<br>
+                    <strong>Use "Invocar Monstro Urgente"</strong> se algo inesperado surgir.
+                </div>
             </div>
 
             <div class="section-title">
@@ -232,7 +252,11 @@
             </h2>
             <p class="modal-subtitle">Toque em uma das cartas para invocar o monstro</p>
             <div class="modal-time" id="modal-time"></div>
+            <div class="modal-note" id="task-roll-note"></div>
             <div id="task-selection-cards" class="task-selection-grid"></div>
+            <button class="btn btn-danger btn-block" id="discard-task-roll" onclick="discardTaskRoll()" style="margin-bottom: 10px;">
+                Descartar 3 cartas
+            </button>
             <button class="btn btn-block" onclick="closeTaskModal()">
                 <i data-lucide="x" style="width: 20px; height: 20px;"></i>
                 Cancelar
@@ -259,6 +283,51 @@
             <button class="btn btn-block" onclick="closeManagementModal()">
                 <i data-lucide="x" style="width: 20px; height: 20px;"></i>
                 Fechar
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL DE URGÊNCIA -->
+    <div id="urgent-modal" class="modal-overlay" onclick="handleUrgentOutsideClick(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h2>
+                <i data-lucide="alert-triangle" style="width: 24px; height: 24px;"></i>
+                Monstro Urgente
+            </h2>
+            <p class="modal-subtitle">Crie uma emergência rápida que ignora as regras normais.</p>
+
+            <div class="urgent-form">
+                <label for="urgent-name">O que aconteceu?</label>
+                <input type="text" id="urgent-name" placeholder="Ex: Vazamento na cozinha" maxlength="60">
+
+                <label for="urgent-urgency">Nível de urgência</label>
+                <select id="urgent-urgency">
+                    <option value="light">Leve</option>
+                    <option value="medium">Média</option>
+                    <option value="critical">Crítica</option>
+                </select>
+
+                <label for="urgent-time">Tempo estimado</label>
+                <select id="urgent-time">
+                    <option value="infinite">Sem limite</option>
+                    <option value="5">5 minutos</option>
+                    <option value="10">10 minutos</option>
+                    <option value="15">15 minutos</option>
+                    <option value="30">30 minutos</option>
+                    <option value="60">60 minutos</option>
+                </select>
+            </div>
+
+            <div class="urgent-status" id="urgent-status"></div>
+
+            <button class="btn btn-danger btn-block" onclick="createUrgentTask()" style="margin-bottom: 10px;">
+                <i data-lucide="zap" style="width: 20px; height: 20px;"></i>
+                Criar Emergência
+            </button>
+
+            <button class="btn btn-block" onclick="closeUrgentModal()">
+                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+                Cancelar
             </button>
         </div>
     </div>

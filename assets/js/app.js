@@ -79,16 +79,47 @@ const FREQUENCY_DAYS = {
     semanal: 7,
     quinzenal: 14
 };
+const TASK_DRAW_COUNT = 3;
+const TASK_DRAW_DISCARD_COST = 30;
+const URGENT_BASE_LOOT = 40;
+const URGENT_DAILY_LIMIT = 2;
+const URGENT_COOLDOWN_MINUTES = 30;
+const URGENCY_CONFIG = {
+    light: {
+        label: 'Leve',
+        multiplier: 1.1,
+        bonusLabel: '+10% de loot',
+        icon: 'sparkles'
+    },
+    medium: {
+        label: 'Média',
+        multiplier: 1.25,
+        bonusLabel: '+25% de loot',
+        icon: 'alert-triangle'
+    },
+    critical: {
+        label: 'Crítica',
+        multiplier: 1.5,
+        bonusLabel: '+50% de loot',
+        icon: 'flame'
+    }
+};
 
 let gameState = {
     players: [],
     gold: 0,
     activeMonsters: [],
+    urgentTasks: [],
     shopItems: JSON.parse(JSON.stringify(INITIAL_SHOP)),
     initialized: false,
     activityLog: [],
     purchaseHistory: [],
-    timeAvailable: 'infinite'
+    timeAvailable: 'infinite',
+    pendingTaskDraw: null,
+    urgentDailyCount: 0,
+    urgentDailyKey: null,
+    urgentCooldownUntil: null,
+    freeDiscardTokens: 0
 };
 
 let currentDayKey = null;
@@ -114,6 +145,26 @@ function getDateKey(date) {
 
 function getTodayKey() {
     return getDateKey(new Date());
+}
+
+function ensureGameStateDefaults() {
+    if (!Array.isArray(gameState.activeMonsters)) gameState.activeMonsters = [];
+    if (!Array.isArray(gameState.urgentTasks)) gameState.urgentTasks = [];
+    if (!Array.isArray(gameState.activityLog)) gameState.activityLog = [];
+    if (!Array.isArray(gameState.purchaseHistory)) gameState.purchaseHistory = [];
+    if (!gameState.timeAvailable) gameState.timeAvailable = 'infinite';
+    if (!gameState.shopItems || !Array.isArray(gameState.shopItems)) {
+        gameState.shopItems = JSON.parse(JSON.stringify(INITIAL_SHOP));
+    }
+    if (typeof gameState.urgentDailyCount !== 'number') gameState.urgentDailyCount = 0;
+    if (!gameState.urgentDailyKey) gameState.urgentDailyKey = getTodayKey();
+    if (!gameState.urgentCooldownUntil) gameState.urgentCooldownUntil = null;
+    if (typeof gameState.freeDiscardTokens !== 'number') gameState.freeDiscardTokens = 0;
+    if (!gameState.pendingTaskDraw) gameState.pendingTaskDraw = null;
+}
+
+function getUrgencyConfig(level) {
+    return URGENCY_CONFIG[level] || URGENCY_CONFIG.light;
 }
 
 function getTaskByName(taskName) {
@@ -239,6 +290,35 @@ function getAvailableTasksByTime(timeAvailable) {
     };
 }
 
+function getPendingTaskDraw() {
+    if (!gameState.pendingTaskDraw || !Array.isArray(gameState.pendingTaskDraw.tasks)) {
+        return null;
+    }
+    const todayKey = getTodayKey();
+    if (gameState.pendingTaskDraw.dayKey !== todayKey) {
+        gameState.pendingTaskDraw = null;
+        saveGame();
+        return null;
+    }
+    return gameState.pendingTaskDraw;
+}
+
+function setPendingTaskDraw(tasks) {
+    gameState.pendingTaskDraw = {
+        tasks: tasks.map(task => ({ ...task })),
+        createdAt: new Date().toISOString(),
+        dayKey: getTodayKey(),
+        timeAvailable: gameState.timeAvailable
+    };
+    saveGame();
+}
+
+function clearPendingTaskDraw() {
+    if (!gameState.pendingTaskDraw) return;
+    gameState.pendingTaskDraw = null;
+    saveGame();
+}
+
 function getRandomTasks(pool, count) {
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
     const unique = [];
@@ -279,10 +359,7 @@ function init() {
     if (saved) {
         try {
             gameState = JSON.parse(saved);
-            
-            if (!gameState.activityLog) gameState.activityLog = [];
-            if (!gameState.purchaseHistory) gameState.purchaseHistory = [];
-            if (!gameState.timeAvailable) gameState.timeAvailable = 'infinite';
+            ensureGameStateDefaults();
             
             if (gameState.initialized) {
                 ensureTaskMetadata();
@@ -294,6 +371,7 @@ function init() {
                 updateGold();
                 renderTimeSelector();
                 renderDailyStatus();
+                renderTaskRollStatus();
             }
         } catch (e) {
             console.error('Erro ao carregar save:', e);
@@ -320,6 +398,7 @@ function startGame() {
     
     gameState.players = [p1, p2];
     gameState.initialized = true;
+    gameState.urgentDailyKey = getTodayKey();
     
     saveGame();
     showGameInterface();
@@ -355,6 +434,7 @@ function updateTimeAvailable() {
     
     setTaskFeedback('');
     renderTimeSelector();
+    renderTaskRollStatus();
     saveGame();
 }
 
@@ -381,6 +461,66 @@ function setTaskFeedback(message) {
     if (feedback) {
         feedback.textContent = message;
     }
+}
+
+function renderTaskRollStatus() {
+    const statusEl = document.getElementById('task-roll-status');
+    if (!statusEl) return;
+    const pending = getPendingTaskDraw();
+    if (pending) {
+        const timeLabel = pending.timeAvailable === 'infinite'
+            ? 'Tempo livre'
+            : `Tempo ${formatTimeLabel(pending.timeAvailable)}`;
+        const tokenLabel = gameState.freeDiscardTokens > 0
+            ? `Você tem ${gameState.freeDiscardTokens} descarte grátis.`
+            : `Descarte custa ${TASK_DRAW_DISCARD_COST} moedas.`;
+        statusEl.innerHTML = `
+            <strong>Cartas disponíveis no momento:</strong> 3 tarefas fixas (${timeLabel}).
+            Complete uma delas ou descarte as 3 para rolar novamente. ${tokenLabel}
+        `;
+    } else {
+        statusEl.innerHTML = `
+            <strong>Sem rolagem fixa.</strong> Clique em "Invocar Tarefa" para gerar 3 cartas.
+        `;
+    }
+}
+
+function canDiscardTaskRoll() {
+    const pending = getPendingTaskDraw();
+    if (!pending) {
+        return { allowed: false, label: 'Sem cartas para descartar' };
+    }
+    if (gameState.freeDiscardTokens > 0) {
+        return { allowed: true, label: 'Descartar 3 cartas (grátis)' };
+    }
+    if (gameState.gold >= TASK_DRAW_DISCARD_COST) {
+        return { allowed: true, label: `Descartar 3 cartas (-${TASK_DRAW_DISCARD_COST} moedas)` };
+    }
+    return { allowed: false, label: `Precisa de ${TASK_DRAW_DISCARD_COST} moedas` };
+}
+
+function discardTaskRoll() {
+    const pending = getPendingTaskDraw();
+    if (!pending) return;
+    const canDiscard = canDiscardTaskRoll();
+    if (!canDiscard.allowed) {
+        alert('Você não tem moedas suficientes para descartar agora.');
+        return;
+    }
+    const message = gameState.freeDiscardTokens > 0
+        ? 'Descartar as 3 cartas usando um descarte grátis?'
+        : `Descartar as 3 cartas por ${TASK_DRAW_DISCARD_COST} moedas?`;
+    if (!confirm(message)) return;
+    if (gameState.freeDiscardTokens > 0) {
+        gameState.freeDiscardTokens -= 1;
+    } else {
+        gameState.gold = Math.max(0, gameState.gold - TASK_DRAW_DISCARD_COST);
+    }
+    clearPendingTaskDraw();
+    saveGame();
+    renderTaskRollStatus();
+    closeTaskModal();
+    renderDungeon();
 }
 
 function renderDailyStatus() {
@@ -422,8 +562,16 @@ function renderDailyStatus() {
 function refreshDailyStatusIfNeeded() {
     const todayKey = getTodayKey();
     if (todayKey !== currentDayKey) {
+        if (gameState.pendingTaskDraw) {
+            gameState.pendingTaskDraw = null;
+        }
+        gameState.urgentDailyCount = 0;
+        gameState.urgentDailyKey = todayKey;
+        gameState.urgentCooldownUntil = null;
+        saveGame();
         renderDailyStatus();
         renderMap();
+        renderTaskRollStatus();
     }
 }
 
@@ -452,21 +600,35 @@ function openTaskModal() {
     const modal = document.getElementById('task-modal');
     const container = document.getElementById('task-selection-cards');
     const modalTime = document.getElementById('modal-time');
+    const modalNote = document.getElementById('task-roll-note');
+    const discardBtn = document.getElementById('discard-task-roll');
     container.innerHTML = '';
-    
-    if (!gameState.timeAvailable) {
-        setTaskFeedback('Defina o tempo disponível antes de invocar uma tarefa.');
-        return;
+
+    const pending = getPendingTaskDraw();
+    let tasks = [];
+    let timeAvailable = gameState.timeAvailable;
+
+    if (!pending) {
+        if (!gameState.timeAvailable) {
+            setTaskFeedback('Defina o tempo disponível antes de invocar uma tarefa.');
+            return;
+        }
+        
+        const { timeFiltered, available } = getAvailableTasksByTime(gameState.timeAvailable);
+        if (timeFiltered.length === 0) {
+            setTaskFeedback('Não há tarefas compatíveis com esse tempo.');
+            return;
+        }
+        
+        setTaskFeedback('');
+        tasks = getRandomTasks(available, TASK_DRAW_COUNT);
+        setPendingTaskDraw(tasks);
+        renderTaskRollStatus();
+    } else {
+        tasks = pending.tasks;
+        timeAvailable = pending.timeAvailable;
+        setTaskFeedback('');
     }
-    
-    const { timeFiltered, available } = getAvailableTasksByTime(gameState.timeAvailable);
-    if (timeFiltered.length === 0) {
-        setTaskFeedback('Não há tarefas compatíveis com esse tempo.');
-        return;
-    }
-    
-    setTaskFeedback('');
-    const tasks = getRandomTasks(available, 3);
     
     const difficultyLabels = {
         easy: 'Fácil',
@@ -475,15 +637,33 @@ function openTaskModal() {
     };
     
     if (modalTime) {
-        modalTime.textContent = gameState.timeAvailable === 'infinite'
+        modalTime.textContent = timeAvailable === 'infinite'
             ? 'Tempo disponível: Infinito'
-            : `Tempo disponível: ${formatTimeLabel(gameState.timeAvailable)}`;
+            : `Tempo disponível: ${formatTimeLabel(timeAvailable)}`;
+    }
+
+    if (modalNote) {
+        modalNote.textContent = pending
+            ? 'Essas são as 3 cartas fixas do momento. Complete uma ou descarte as 3 para rolar novamente.'
+            : 'Cartas geradas! Elas ficam fixas até completar uma tarefa ou descartar as 3.';
+    }
+
+    if (discardBtn) {
+        const canDiscard = canDiscardTaskRoll();
+        discardBtn.disabled = !canDiscard.allowed;
+        discardBtn.innerHTML = canDiscard.label;
     }
     
+    const activeNames = new Set(gameState.activeMonsters.map(monster => monster.name));
     tasks.forEach(task => {
         const card = document.createElement('div');
         card.className = 'task-selection-card';
-        card.onclick = () => selectTask(task);
+        const isActive = activeNames.has(task.name);
+        if (isActive) {
+            card.classList.add('is-disabled');
+        } else {
+            card.onclick = () => selectTask(task);
+        }
         
         card.innerHTML = `
             <div class="task-selection-header ${task.difficulty}">
@@ -497,6 +677,7 @@ function openTaskModal() {
                         <i data-lucide="coins" style="width: 16px; height: 16px;"></i>
                         +${task.loot}
                     </div>
+                    ${isActive ? '<div class="task-selection-tag">Já na mesa</div>' : ''}
                 </div>
                 <div class="time-badge">
                     <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
@@ -527,6 +708,9 @@ function handleModalOutsideClick(event) {
 }
 
 function selectTask(task) {
+    if (gameState.activeMonsters.some(monster => monster.name === task.name)) {
+        return;
+    }
     const instanceTask = {
         ...task,
         id: Date.now() + Math.random()
@@ -546,6 +730,117 @@ function selectTask(task) {
             document.getElementById('total-gold').classList.remove('pulse');
         }, 300);
     }, 100);
+}
+
+// ============================================
+// TAREFAS URGENTES
+// ============================================
+function openUrgentModal() {
+    const modal = document.getElementById('urgent-modal');
+    const status = document.getElementById('urgent-status');
+    const todayKey = getTodayKey();
+
+    if (gameState.urgentDailyKey !== todayKey) {
+        gameState.urgentDailyKey = todayKey;
+        gameState.urgentDailyCount = 0;
+        gameState.urgentCooldownUntil = null;
+        saveGame();
+    }
+
+    if (status) {
+        status.textContent = getUrgentStatusLabel();
+    }
+
+    modal.classList.add('open');
+    setTimeout(initIcons, 50);
+}
+
+function closeUrgentModal() {
+    document.getElementById('urgent-modal').classList.remove('open');
+}
+
+function handleUrgentOutsideClick(event) {
+    if (event.target.id === 'urgent-modal') {
+        closeUrgentModal();
+    }
+}
+
+function getUrgentStatusLabel() {
+    const now = Date.now();
+    const limitRemaining = Math.max(0, URGENT_DAILY_LIMIT - (gameState.urgentDailyCount || 0));
+    const cooldown = gameState.urgentCooldownUntil ? new Date(gameState.urgentCooldownUntil).getTime() : 0;
+    if (limitRemaining <= 0) {
+        return `Limite diário atingido (${URGENT_DAILY_LIMIT} urgências).`;
+    }
+    if (cooldown && cooldown > now) {
+        const minutes = Math.ceil((cooldown - now) / (60 * 1000));
+        return `Cooldown ativo: aguarde ${minutes} min.`;
+    }
+    return `Você pode invocar mais ${limitRemaining} urgência(s) hoje.`;
+}
+
+function createUrgentTask() {
+    const nameInput = document.getElementById('urgent-name');
+    const urgencySelect = document.getElementById('urgent-urgency');
+    const timeSelect = document.getElementById('urgent-time');
+    if (!nameInput || !urgencySelect || !timeSelect) return;
+
+    const name = nameInput.value.trim();
+    if (!name) {
+        alert('Descreva rapidamente a tarefa urgente.');
+        return;
+    }
+
+    const todayKey = getTodayKey();
+    if (gameState.urgentDailyKey !== todayKey) {
+        gameState.urgentDailyKey = todayKey;
+        gameState.urgentDailyCount = 0;
+        gameState.urgentCooldownUntil = null;
+    }
+
+    if (gameState.urgentDailyCount >= URGENT_DAILY_LIMIT) {
+        alert('Limite diário de emergências atingido.');
+        return;
+    }
+
+    const now = Date.now();
+    const cooldownUntil = gameState.urgentCooldownUntil ? new Date(gameState.urgentCooldownUntil).getTime() : 0;
+    if (cooldownUntil && cooldownUntil > now) {
+        alert('Ainda está em cooldown. Aguarde um pouco para invocar outra urgência.');
+        return;
+    }
+
+    const urgencyLevel = urgencySelect.value;
+    const urgency = getUrgencyConfig(urgencyLevel);
+    const baseLoot = URGENT_BASE_LOOT;
+    const loot = Math.round(baseLoot * urgency.multiplier);
+    const timeValue = timeSelect.value === 'infinite' ? 'infinite' : parseInt(timeSelect.value, 10);
+    const timeLabel = timeValue === 'infinite' ? 'Tempo aberto' : formatTimeLabel(timeValue);
+
+    const urgentTask = {
+        id: Date.now() + Math.random(),
+        name,
+        urgency: urgencyLevel,
+        urgencyLabel: urgency.label,
+        timeEstimate: timeValue,
+        timeLabel,
+        loot,
+        rewardLabel: urgency.bonusLabel,
+        createdAt: new Date().toISOString()
+    };
+
+    gameState.urgentTasks.unshift(urgentTask);
+    gameState.urgentDailyCount += 1;
+    gameState.urgentDailyKey = todayKey;
+    gameState.urgentCooldownUntil = new Date(now + URGENT_COOLDOWN_MINUTES * 60 * 1000).toISOString();
+
+    nameInput.value = '';
+    urgencySelect.value = 'light';
+    timeSelect.value = 'infinite';
+
+    saveGame();
+    closeUrgentModal();
+    renderDungeon();
 }
 
 // ============================================
@@ -645,6 +940,41 @@ function clearAllMonsters() {
 // ============================================
 // MECÂNICA: MASMORRA
 // ============================================
+function killUrgentTask(id, playerIndex) {
+    const urgentIndex = gameState.urgentTasks.findIndex(task => task.id === id);
+    if (urgentIndex === -1) return;
+
+    const urgentTask = gameState.urgentTasks[urgentIndex];
+    const player = gameState.players[playerIndex];
+
+    gameState.gold += urgentTask.loot;
+
+    if (urgentTask.urgency === 'critical') {
+        gameState.freeDiscardTokens += 1;
+    }
+
+    gameState.activityLog.unshift({
+        player: player,
+        task: urgentTask.name,
+        gold: urgentTask.loot,
+        urgent: true,
+        urgency: urgentTask.urgency,
+        date: new Date().toISOString()
+    });
+
+    gameState.urgentTasks.splice(urgentIndex, 1);
+
+    saveGame();
+    renderDungeon();
+    renderHistory();
+    renderMap();
+
+    document.getElementById('total-gold').classList.add('pulse');
+    setTimeout(() => {
+        document.getElementById('total-gold').classList.remove('pulse');
+    }, 300);
+}
+
 function killMonster(id, playerIndex) {
     const monsterIndex = gameState.activeMonsters.findIndex(m => m.id === id);
     if (monsterIndex === -1) return;
@@ -662,6 +992,11 @@ function killMonster(id, playerIndex) {
     });
     
     gameState.activeMonsters.splice(monsterIndex, 1);
+
+    const pending = getPendingTaskDraw();
+    if (pending && pending.tasks.some(task => task.name === monster.name)) {
+        clearPendingTaskDraw();
+    }
     
     saveGame();
     renderDungeon();
@@ -674,6 +1009,62 @@ function killMonster(id, playerIndex) {
     }, 300);
 }
 
+function renderUrgentTasks() {
+    const container = document.getElementById('urgent-tasks');
+    const emptyState = document.getElementById('empty-urgent');
+    if (!container || !emptyState) return;
+
+    container.innerHTML = '';
+
+    if (gameState.urgentTasks.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+    }
+
+    emptyState.style.display = 'none';
+    gameState.urgentTasks.forEach(task => {
+        const urgency = getUrgencyConfig(task.urgency);
+        const card = document.createElement('div');
+        card.className = `urgent-card urgency-${task.urgency}`;
+        card.innerHTML = `
+            <div class="urgent-card-header">
+                <div>
+                    <div class="urgent-card-title">${task.name}</div>
+                    <div class="urgent-card-urgency">
+                        <i data-lucide="${urgency.icon}" style="width: 16px; height: 16px;"></i>
+                        ${task.urgencyLabel}
+                    </div>
+                </div>
+                <div class="urgent-card-reward">${task.rewardLabel}</div>
+            </div>
+            <div class="urgent-card-body">
+                <div class="urgent-card-meta">
+                    <span class="loot-badge">
+                        <i data-lucide="coins" style="width: 14px; height: 14px;"></i>
+                        +${task.loot}
+                    </span>
+                    <span class="time-badge">
+                        <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
+                        ${task.timeLabel}
+                    </span>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-success btn-small" onclick="killUrgentTask(${task.id}, 0)">
+                        <i data-lucide="check" style="width: 16px; height: 16px;"></i>
+                        ${gameState.players[0]}
+                    </button>
+                    <button class="btn btn-success btn-small" onclick="killUrgentTask(${task.id}, 1)">
+                        <i data-lucide="check" style="width: 16px; height: 16px;"></i>
+                        ${gameState.players[1]}
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+    initIcons();
+}
+
 function renderDungeon() {
     const container = document.getElementById('active-monsters');
     const emptyState = document.getElementById('empty-dungeon');
@@ -681,8 +1072,10 @@ function renderDungeon() {
     container.innerHTML = '';
     renderTimeSelector();
     renderDailyStatus();
+    renderTaskRollStatus();
+    renderUrgentTasks();
     
-    if (gameState.activeMonsters.length === 0) {
+    if (gameState.activeMonsters.length === 0 && gameState.urgentTasks.length === 0) {
         emptyState.style.display = 'block';
         return;
     } else {
@@ -1098,6 +1491,7 @@ function renderActivityLog() {
                 <span class="history-item-date">${dateStr}</span>
             </div>
             <div class="history-task">${entry.task}</div>
+            ${entry.urgent ? `<div class="history-urgent">Urgência ${getUrgencyConfig(entry.urgency).label}</div>` : ''}
             <div class="loot-badge">
                 <i data-lucide="coins" style="width: 14px; height: 14px;"></i>
                 +${entry.gold}
