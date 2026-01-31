@@ -217,17 +217,24 @@ function formatFrequency(frequency) {
 
 function ensureTaskMetadata() {
     gameState.tasks = gameState.tasks.map(task => {
+        const status = task.status ?? 'active';
         if (task.type === 'urgent') {
+            const urgency = getUrgencyConfig(task.urgency);
+            const timeEstimate = task.timeEstimate ?? 'infinite';
             return {
                 ...task,
-                timeEstimate: task.timeEstimate ?? 'infinite',
-                timeLabel: task.timeLabel ?? (task.timeEstimate === 'infinite' ? 'Tempo aberto' : formatTimeLabel(task.timeEstimate))
+                status,
+                timeEstimate,
+                timeLabel: task.timeLabel ?? (timeEstimate === 'infinite' ? 'Tempo aberto' : formatTimeLabel(timeEstimate)),
+                urgencyLabel: task.urgencyLabel ?? urgency.label,
+                rewardLabel: task.rewardLabel ?? urgency.bonusLabel
             };
         }
         const match = getTaskByName(task.name);
         if (!match) return task;
         return {
             ...task,
+            status,
             time: task.time ?? match.time,
             frequency: task.frequency ?? match.frequency,
             difficulty: task.difficulty ?? match.difficulty,
@@ -279,7 +286,7 @@ function migrateLegacyTasks() {
 }
 
 function getActiveTasksByType(type) {
-    return gameState.tasks.filter(task => task.type === type && task.status === 'active');
+    return gameState.tasks.filter(task => task.type === type && (task.status ?? 'active') === 'active');
 }
 
 function findTaskById(id) {
@@ -491,7 +498,16 @@ function updateStreakOnCompletion() {
         return;
     }
     const diff = getDayDiff(lastKey, todayKey);
+    if (diff === null) {
+        gameState.streakCount = 1;
+        gameState.streakLastCompletionKey = todayKey;
+        return;
+    }
     if (diff === 0) {
+        if (!gameState.streakCount) {
+            gameState.streakCount = 1;
+        }
+        gameState.streakLastCompletionKey = todayKey;
         return;
     }
     if (diff === 1) {
