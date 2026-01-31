@@ -263,7 +263,7 @@ select:focus {
 ============================================ */
 .actions-area {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 12px;
     margin-bottom: 32px;
 }
@@ -375,6 +375,99 @@ select:focus {
     font-weight: 700;
     color: var(--color-danger);
     min-height: 22px;
+}
+
+.task-roll-status {
+    background: #fff5d6;
+    border: var(--stroke-thin);
+    border-radius: 14px;
+    padding: 14px 16px;
+    font-weight: 700;
+    color: #5a3d0c;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+}
+
+.urgent-title {
+    color: #b42318;
+}
+
+.urgent-grid {
+    display: grid;
+    gap: 18px;
+    margin-bottom: 16px;
+}
+
+.urgent-card {
+    background: #fff2f2;
+    border: var(--stroke);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 18px;
+    animation: urgentPulse 2.8s ease-in-out infinite;
+}
+
+.urgent-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.urgent-card-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+
+.urgent-card-urgency {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    margin-top: 6px;
+}
+
+.urgent-card-reward {
+    background: #ffe08a;
+    border: var(--stroke-thin);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    box-shadow: 0 2px 0 #1a1a1a;
+}
+
+.urgent-card-body {
+    display: grid;
+    gap: 14px;
+}
+
+.urgent-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.urgent-card.urgency-light {
+    border-color: #f7d707;
+}
+
+.urgent-card.urgency-medium {
+    border-color: #ff9f1c;
+}
+
+.urgent-card.urgency-critical {
+    border-color: #ef476f;
+    background: #ffe3e3;
+}
+
+.urgent-empty {
+    padding-top: 20px;
+    padding-bottom: 30px;
+    opacity: 0.8;
 }
 
 /* ============================================
@@ -561,6 +654,17 @@ select:focus {
     transform: translateY(0) scale(0.98);
 }
 
+.task-selection-card.is-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.task-selection-card.is-disabled:hover {
+    transform: none;
+    box-shadow: var(--shadow);
+}
+
 .task-selection-header {
     padding: 24px 20px;
     color: white;
@@ -587,11 +691,25 @@ select:focus {
     gap: 10px;
 }
 
+.task-selection-tag {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #b42318;
+}
+
 .modal-time {
     text-align: center;
     font-weight: 800;
     margin-bottom: 20px;
     color: #444;
+}
+
+.modal-note {
+    text-align: center;
+    font-weight: 700;
+    color: #7a4d00;
+    margin-bottom: 16px;
 }
 
 .time-badge {
@@ -657,6 +775,26 @@ select:focus {
     font-size: 0.9rem;
     color: #666;
     flex-wrap: wrap;
+}
+
+.urgent-form {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.urgent-form label {
+    font-weight: 800;
+}
+
+.urgent-status {
+    background: #f3f4f6;
+    border: var(--stroke-thin);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 20px;
 }
 
 /* ============================================
@@ -794,6 +932,16 @@ select:focus {
     color: #333;
 }
 
+.history-urgent {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: #b42318;
+    margin-bottom: 8px;
+}
+
 /* ============================================
    NAVIGATION
 ============================================ */
@@ -859,6 +1007,11 @@ select:focus {
 @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.05); }
+}
+
+@keyframes urgentPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(239, 71, 111, 0.3); }
+    50% { box-shadow: 0 0 18px rgba(239, 71, 111, 0.35); }
 }
 
 .pulse {
