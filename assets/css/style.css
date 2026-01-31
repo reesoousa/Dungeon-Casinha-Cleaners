@@ -151,6 +151,17 @@ header {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-action {
+    border: var(--stroke-thin);
+    background: var(--color-white);
+}
+
 .logo {
     font-family: 'Fredoka', sans-serif;
     font-size: 1.1rem;
@@ -263,14 +274,26 @@ select:focus {
 ============================================ */
 .actions-area {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 12px;
-    margin-bottom: 32px;
+    gap: 16px;
+    margin-bottom: 28px;
 }
 
-.actions-area .btn {
-    padding: 20px;
-    font-size: 1.1rem;
+.action-primary {
+    padding: 22px;
+    font-size: 1.15rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.actions-secondary {
+    display: grid;
+    gap: 12px;
+}
+
+.action-secondary {
+    padding: 14px 18px;
+    font-size: 0.95rem;
+    width: 100%;
 }
 
 .section-title {
@@ -292,6 +315,72 @@ select:focus {
     margin-bottom: 18px;
     display: grid;
     gap: 16px;
+}
+
+.streak-card {
+    background: var(--color-white);
+    border: var(--stroke);
+    box-shadow: var(--shadow);
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 16px;
+    align-items: center;
+}
+
+.streak-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    background: #fff2c1;
+    border: var(--stroke-thin);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 0 #1a1a1a;
+}
+
+.streak-content {
+    display: grid;
+    gap: 8px;
+}
+
+.streak-title {
+    font-family: 'Fredoka', sans-serif;
+    font-size: 1.05rem;
+}
+
+.streak-subtitle {
+    color: #5b4a3b;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.streak-progress {
+    display: grid;
+    gap: 6px;
+}
+
+.streak-bar {
+    width: 100%;
+    height: 10px;
+    background: #f3ead6;
+    border-radius: 999px;
+    border: var(--stroke-thin);
+    overflow: hidden;
+}
+
+.streak-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f7d707 0%, #ffb703 100%);
+}
+
+.streak-meta {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #6b4c21;
 }
 
 .daily-date {
@@ -388,8 +477,16 @@ select:focus {
     box-shadow: var(--shadow);
 }
 
+.task-roll-status.is-hidden {
+    display: none;
+}
+
+.urgent-section {
+    display: none;
+}
+
 .urgent-title {
-    color: #b42318;
+    color: #b21f1f;
 }
 
 .urgent-grid {
@@ -462,12 +559,6 @@ select:focus {
 .urgent-card.urgency-critical {
     border-color: #ef476f;
     background: #ffe3e3;
-}
-
-.urgent-empty {
-    padding-top: 20px;
-    padding-bottom: 30px;
-    opacity: 0.8;
 }
 
 /* ============================================
@@ -1396,7 +1487,7 @@ select:focus {
     }
     
     .actions-area {
-        grid-template-columns: 1fr;
+        gap: 14px;
     }
 
     .summary-header {

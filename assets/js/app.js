@@ -468,6 +468,7 @@ function renderTaskRollStatus() {
     if (!statusEl) return;
     const pending = getPendingTaskDraw();
     if (pending) {
+        statusEl.classList.remove('is-hidden');
         const timeLabel = pending.timeAvailable === 'infinite'
             ? 'Tempo livre'
             : `Tempo ${formatTimeLabel(pending.timeAvailable)}`;
@@ -479,9 +480,8 @@ function renderTaskRollStatus() {
             Complete uma delas ou descarte as 3 para rolar novamente. ${tokenLabel}
         `;
     } else {
-        statusEl.innerHTML = `
-            <strong>Sem rolagem fixa.</strong> Clique em "Invocar Tarefa" para gerar 3 cartas.
-        `;
+        statusEl.classList.add('is-hidden');
+        statusEl.innerHTML = '';
     }
 }
 
@@ -1011,17 +1011,17 @@ function killMonster(id, playerIndex) {
 
 function renderUrgentTasks() {
     const container = document.getElementById('urgent-tasks');
-    const emptyState = document.getElementById('empty-urgent');
-    if (!container || !emptyState) return;
+    const section = document.getElementById('urgent-section');
+    if (!container || !section) return;
 
     container.innerHTML = '';
 
     if (gameState.urgentTasks.length === 0) {
-        emptyState.style.display = 'block';
+        section.style.display = 'none';
         return;
     }
 
-    emptyState.style.display = 'none';
+    section.style.display = 'block';
     gameState.urgentTasks.forEach(task => {
         const urgency = getUrgencyConfig(task.urgency);
         const card = document.createElement('div');
